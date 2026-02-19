@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'screens/voice_analyze_screen.dart';
+import 'screens/home_screen.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const VoiceTherapyApp());
@@ -14,11 +15,8 @@ class VoiceTherapyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Voice Therapy App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const VoiceAnalyzeScreen(),
+      theme: AppTheme.build(),
+      home: const HomeScreen(),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/app_top_header.dart';
 
 class VocalHygieneScreen extends StatefulWidget {
   const VocalHygieneScreen({super.key});
@@ -86,8 +87,6 @@ class _VocalHygieneScreenState extends State<VocalHygieneScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final topInset = MediaQuery.of(context).padding.top;
-
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light.copyWith(
@@ -96,47 +95,7 @@ class _VocalHygieneScreenState extends State<VocalHygieneScreen> {
         ),
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.fromLTRB(16, topInset + 6, 16, 12),
-              decoration: const BoxDecoration(
-                color: AppTheme.darkBlue,
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Vokal Hijyen',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            const AppTopHeader.withBack(title: 'Vokal Hijyen'),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(0, 16, 0, 24),
@@ -234,7 +193,7 @@ class _InfoCard extends StatelessWidget {
                 Text(
                   item.description,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 14,
                     height: 1.35,
                     color: Color(0xFF4F4F4F),
                   ),
@@ -320,7 +279,7 @@ class _CategoryCard extends StatelessWidget {
               child: Text(
                 '• $item',
                 style: const TextStyle(
-                  fontSize: 13.5,
+                  fontSize: 14,
                   height: 1.35,
                   color: Color(0xFF4F4F4F),
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/app_top_header.dart';
 import 'warmup_exercise.dart';
 import 'warmup_video_screen.dart';
 
@@ -45,7 +46,7 @@ class BreathControlScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const _TopHeader(),
+            const AppTopHeader.withBack(title: 'Nefes Kontrolü'),
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -69,63 +70,6 @@ class BreathControlScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _TopHeader extends StatelessWidget {
-  const _TopHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    final topInset = MediaQuery.of(context).padding.top;
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(16, topInset + 6, 16, 12),
-      decoration: const BoxDecoration(
-        color: AppTheme.darkBlue,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Row(
-            children: const [
-              _HeaderBackButton(),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Nefes Kontrolü',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeaderBackButton extends StatelessWidget {
-  const _HeaderBackButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: () => Navigator.of(context).pop(),
-      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
     );
   }
 }

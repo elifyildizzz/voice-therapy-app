@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/app_top_header.dart';
 import 'breath_control_screen.dart';
 import 'vocal_hygiene_screen.dart';
 import 'vocal_function_exercises_screen.dart';
@@ -15,114 +16,85 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.dark.copyWith(
+        value: SystemUiOverlayStyle.light.copyWith(
           statusBarColor: Colors.transparent,
           systemNavigationBarColor: AppTheme.surface,
         ),
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            children: [
-              _HeaderCard(),
-              const SizedBox(height: 18),
-              _CategoryTile(
-                icon: Icons.water_drop_outlined,
-                title: 'Vokal Hijyen',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const VocalHygieneScreen(),
-                    ),
-                  );
-                },
+        child: Column(
+          children: [
+            const AppTopHeader.home(
+              title: 'Hoşgeldiniz, İlayda',
+              subtitle: 'Terapistinizin önerdiği egzersiz kategorisini seçin.',
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                children: [
+                  _CategoryTile(
+                    icon: Icons.water_drop_outlined,
+                    title: 'Vokal Hijyen',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const VocalHygieneScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _CategoryTile(
+                    icon: Icons.accessibility_new_outlined,
+                    title: 'Isınma - Gevşeme',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const WarmupRelaxScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _CategoryTile(
+                    icon: Icons.air,
+                    title: 'Nefes Kontrolü',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const BreathControlScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _CategoryTile(
+                    icon: Icons.record_voice_over,
+                    title: 'Vokal Fonksiyon Egzersizleri',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const VocalFunctionExercisesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _CategoryTile(
+                    icon: Icons.medical_services_outlined,
+                    title: 'Ses Sağlığı Ön Tarama Testi',
+                    isHighlighted: true,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const VoiceAnalyzeConsentScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              _CategoryTile(
-                icon: Icons.accessibility_new_outlined,
-                title: 'Isınma - Gevşeme',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const WarmupRelaxScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              _CategoryTile(
-                icon: Icons.air,
-                title: 'Nefes Kontrolü',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const BreathControlScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              _CategoryTile(
-                icon: Icons.record_voice_over,
-                title: 'Vokal Fonksiyon Egzersizleri',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const VocalFunctionExercisesScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              _CategoryTile(
-                icon: Icons.medical_services_outlined,
-                title: 'Ses Sağlığı Ön Tarama Testi',
-                isHighlighted: true,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const VoiceAnalyzeConsentScreen(),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-}
-
-class _HeaderCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
-      decoration: BoxDecoration(
-        color: AppTheme.darkBlue,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Hoşgeldiniz, İlayda',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Terapistinizin önerdiği egzersiz kategorisini seçin.',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14.5,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -144,7 +116,7 @@ class _CategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isHighlighted ? AppTheme.lightBlue : Colors.white,
+      color: isHighlighted ? const Color(0xFFC6E0E6) : Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),

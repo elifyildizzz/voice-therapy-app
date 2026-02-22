@@ -20,3 +20,9 @@ ml/reports/
 
 # IDE
 .vscode/
+
+# Generated ML artifacts
+ml/processed/
+ml/reports/
+ml/models/
+backend/model_artifacts/

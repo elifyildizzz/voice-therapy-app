@@ -21,6 +21,9 @@ ml/reports/
 # IDE
 .vscode/
 
+# Local environment config
+.env
+
 # Generated ML artifacts
 ml/processed/
 ml/reports/

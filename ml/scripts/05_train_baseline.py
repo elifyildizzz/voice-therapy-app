@@ -55,6 +55,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Skip rows where quality_exclude=True.",
     )
+    parser.add_argument(
+        "--feature-names",
+        default="",
+        help=(
+            "Optional comma-separated feature list. "
+            "Empty means use all non-meta feature columns."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -67,13 +75,26 @@ def safe_float(value: str) -> float:
         return np.nan
 
 
-def load_feature_rows(path: Path, drop_quality_excluded: bool) -> tuple[list[dict[str, str]], list[str]]:
+def load_feature_rows(
+    path: Path,
+    drop_quality_excluded: bool,
+    selected_feature_names: list[str] | None = None,
+) -> tuple[list[dict[str, str]], list[str]]:
     with path.open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         rows = []
         feature_names: list[str] = []
         if reader.fieldnames:
-            feature_names = [name for name in reader.fieldnames if name not in META_COLUMNS]
+            available = [name for name in reader.fieldnames if name not in META_COLUMNS]
+            if selected_feature_names:
+                missing = [name for name in selected_feature_names if name not in available]
+                if missing:
+                    raise ValueError(
+                        "Selected feature names are not in CSV header: " + ", ".join(missing)
+                    )
+                feature_names = selected_feature_names
+            else:
+                feature_names = available
 
         for row in reader:
             if row.get("error", ""):
@@ -237,9 +258,14 @@ def main() -> None:
     out_dir = args.out_dir.expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    selected_feature_names = [
+        name.strip() for name in args.feature_names.split(",") if name.strip()
+    ]
+
     rows, feature_names = load_feature_rows(
         args.features_csv.expanduser().resolve(),
         drop_quality_excluded=args.drop_quality_excluded,
+        selected_feature_names=selected_feature_names if selected_feature_names else None,
     )
     if not rows:
         raise SystemExit("No labeled rows found in features CSV.")

@@ -41,6 +41,25 @@ def default_data_root() -> Path:
     )
 
 
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def portable_data_path(path: Path, data_root: Path) -> str:
+    try:
+        return str(path.relative_to(data_root))
+    except ValueError:
+        return str(path)
+
+
+def portable_repo_path(path: Path) -> str:
+    root = repo_root()
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
 def parse_args() -> argparse.Namespace:
     load_env_file()
 
@@ -131,6 +150,33 @@ def should_exclude(remarks_flags: str, duration_sec: float) -> bool:
     return False
 
 
+def resolve_source_path(row: dict[str, str], data_root: Path) -> Path:
+    relative_path = row.get("relative_path", "").strip()
+    if relative_path:
+        return (data_root / relative_path).resolve()
+
+    source_path = Path(row["path"])
+    if source_path.is_absolute() and source_path.exists():
+        return source_path
+    if source_path.is_absolute():
+        parts = source_path.parts
+        if data_root.name in parts:
+            anchor = parts.index(data_root.name)
+            return (data_root / Path(*parts[anchor + 1 :])).resolve()
+    return (data_root / source_path).resolve()
+
+
+def resolve_wav_path(source_path: Path, data_root: Path, wav_root: Path) -> Path:
+    try:
+        rel = source_path.relative_to(data_root)
+    except ValueError as exc:
+        raise ValueError(
+            f"source_path is not under data_root: source={source_path} data_root={data_root}. "
+            "Re-run 01_audit_dataset.py on this machine to regenerate portable audit files."
+        ) from exc
+    return (wav_root / rel).with_suffix(".wav")
+
+
 def main() -> None:
     args = parse_args()
 
@@ -190,9 +236,8 @@ def main() -> None:
             if label == "":
                 unlabeled_rows += 1
 
-            source_path = Path(row["path"])
-            rel = source_path.relative_to(data_root)
-            wav_path = (wav_root / rel).with_suffix(".wav")
+            source_path = resolve_source_path(row, data_root)
+            wav_path = resolve_wav_path(source_path, data_root, wav_root)
 
             duration_sec = float(row["duration_sec"])
             remarks_flags = subject_flags.get(subject_id, "")
@@ -204,8 +249,8 @@ def main() -> None:
                     "label": label,
                     "modality": modality,
                     "token": token,
-                    "source_path": str(source_path),
-                    "wav_path": str(wav_path),
+                    "source_path": portable_data_path(source_path, data_root),
+                    "wav_path": portable_repo_path(wav_path),
                     "sample_rate_hz": row["sample_rate_hz"],
                     "duration_sec": row["duration_sec"],
                     "remarks_flags": remarks_flags,

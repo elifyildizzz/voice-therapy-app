@@ -22,6 +22,10 @@ class VoiceAnalyzeScreen extends StatefulWidget {
 class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
   static const String _initialResult = 'Henüz analiz yapılmadı.';
   static const int _maxRecordSeconds = 5;
+  static const String _configuredBackendBaseUrl = String.fromEnvironment(
+    'BACKEND_BASE_URL',
+    defaultValue: '',
+  );
 
   final AudioRecorder _audioRecorder = AudioRecorder();
 
@@ -33,6 +37,9 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
   Timer? _countdownTimer;
 
   String get _backendBaseUrl {
+    if (_configuredBackendBaseUrl.isNotEmpty) {
+      return _configuredBackendBaseUrl;
+    }
     if (!kIsWeb && Platform.isAndroid) {
       return 'http://10.0.2.2:8000';
     }

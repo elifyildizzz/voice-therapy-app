@@ -10,6 +10,18 @@ import numpy as np
 from scipy.signal import butter, correlate, filtfilt, find_peaks
 
 
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def portable_repo_path(path: Path) -> str:
+    root = repo_root()
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
 FEATURE_COLUMNS_ALL = [
     "duration_sec",
     "rms",
@@ -102,10 +114,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--feature-profile",
         choices=tuple(FEATURE_PROFILE_MAP.keys()),
-        default="top6",
+        default="all",
         help=(
             "Which v2 feature profile to write. "
-            "'top6' is the tuned compact set; 'all' writes the full set."
+            "'all' writes the full set; 'top6' is an optional compact profile "
+            "from prior experiments and should be revalidated separately."
         ),
     )
     return parser.parse_args()
@@ -491,14 +504,34 @@ def v2_features(signal: np.ndarray, sr: int) -> dict[str, float]:
     return out
 
 
+def resolve_wav_path(raw_path: str, metadata_csv: Path) -> Path:
+    wav_path = Path(raw_path)
+    root = repo_root()
+    if wav_path.is_absolute() and wav_path.exists():
+        return wav_path
+    if not wav_path.is_absolute():
+        repo_candidate = (root / wav_path).resolve()
+        if repo_candidate.exists():
+            return repo_candidate
+        return (metadata_csv.parent / wav_path).resolve()
+    parts = wav_path.parts
+    if "ml" in parts:
+        anchor = parts.index("ml")
+        candidate = (root / Path(*parts[anchor:])).resolve()
+        if candidate.exists():
+            return candidate
+    return wav_path
+
+
 def main() -> None:
     args = parse_args()
+    metadata_csv = args.metadata_csv.expanduser().resolve()
     out_csv = args.out_csv.expanduser().resolve()
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     selected_features = FEATURE_PROFILE_MAP[args.feature_profile]
     token_filter = {token.strip() for token in args.token_filter.split(",") if token.strip()}
 
-    with args.metadata_csv.expanduser().resolve().open("r", encoding="utf-8", newline="") as in_f:
+    with metadata_csv.open("r", encoding="utf-8", newline="") as in_f:
         rows = list(csv.DictReader(in_f))
 
     if args.max_rows > 0:
@@ -529,13 +562,13 @@ def main() -> None:
             if args.drop_quality_excluded and row.get("quality_exclude") == "True":
                 continue
 
-            wav_path = Path(row["wav_path"])
+            wav_path = resolve_wav_path(row["wav_path"], metadata_csv)
             out_row = {
                 "subject_id": row["subject_id"],
                 "label": row.get("label", ""),
                 "modality": row["modality"],
                 "token": token,
-                "wav_path": str(wav_path),
+                "wav_path": portable_repo_path(wav_path),
                 "remarks_flags": row.get("remarks_flags", ""),
                 "quality_exclude": row.get("quality_exclude", ""),
             }

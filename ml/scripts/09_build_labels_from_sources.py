@@ -51,6 +51,18 @@ def default_data_root() -> Path:
     )
 
 
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def portable_repo_path(path: Path) -> str:
+    root = repo_root()
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
 def parse_args() -> argparse.Namespace:
     load_env_file()
 
@@ -198,8 +210,10 @@ def main() -> None:
 
     summary = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "labels_source_root": str(labels_root),
-        "data_root": str(data_root),
+        "labels_source_root_env_var": "BITIRME_LABELS_ROOT",
+        "labels_source_root_default": "~/Desktop/bitirme/labels_source",
+        "data_root_env_var": "BITIRME_DATA_ROOT",
+        "data_root_default": "~/Desktop/bitirme/data",
         "diagnosis_group_count": len(group_dirs),
         "detailed_rows_count": len(detailed_rows),
         "binary_rows_count": len(binary_rows),
@@ -209,9 +223,9 @@ def main() -> None:
         "outside_dataset_subject_count": len(outside_dataset),
         "unlabeled_subjects_in_dataset_count": unlabeled_in_dataset,
         "outputs": {
-            "labels_csv": str(out_csv),
-            "labels_detailed_csv": str(out_detailed),
-            "summary_json": str(out_summary),
+            "labels_csv": portable_repo_path(out_csv),
+            "labels_detailed_csv": portable_repo_path(out_detailed),
+            "summary_json": portable_repo_path(out_summary),
         },
     }
     out_summary.write_text(json.dumps(summary, indent=2), encoding="utf-8")

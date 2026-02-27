@@ -51,6 +51,25 @@ def env_path_or_default(name: str, fallback: Path) -> Path:
     return Path(os.path.expandvars(raw)).expanduser()
 
 
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def portable_data_path(path: Path, data_root: Path) -> str:
+    try:
+        return str(path.relative_to(data_root))
+    except ValueError:
+        return str(path)
+
+
+def portable_repo_path(path: Path) -> str:
+    root = repo_root()
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
 def parse_args() -> argparse.Namespace:
     load_env_file()
 
@@ -199,8 +218,8 @@ def main() -> None:
                 skipped += 1
                 writer.writerow(
                     {
-                        "source_path": str(source_path),
-                        "target_path": str(target_path),
+                        "source_path": portable_data_path(source_path, data_root),
+                        "target_path": portable_repo_path(target_path),
                         "status": "skipped_exists",
                         "error": "",
                         "sample_rate_hz": "",
@@ -218,8 +237,8 @@ def main() -> None:
                 converted += 1
                 writer.writerow(
                     {
-                        "source_path": str(source_path),
-                        "target_path": str(target_path),
+                        "source_path": portable_data_path(source_path, data_root),
+                        "target_path": portable_repo_path(target_path),
                         "status": "converted",
                         "error": "",
                         "sample_rate_hz": audio.sample_rate_hz,
@@ -233,8 +252,8 @@ def main() -> None:
                 failed += 1
                 writer.writerow(
                     {
-                        "source_path": str(source_path),
-                        "target_path": str(target_path),
+                        "source_path": portable_data_path(source_path, data_root),
+                        "target_path": portable_repo_path(target_path),
                         "status": "failed",
                         "error": str(exc),
                         "sample_rate_hz": "",
@@ -250,13 +269,14 @@ def main() -> None:
 
     summary = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "data_root": str(data_root),
-        "out_dir": str(out_dir),
+        "data_root_env_var": "BITIRME_DATA_ROOT",
+        "data_root_default": "~/Desktop/bitirme/data",
+        "out_dir": portable_repo_path(out_dir),
         "source_file_count": len(source_files),
         "converted_count": converted,
         "skipped_count": skipped,
         "failed_count": failed,
-        "report_csv": str(report_path),
+        "report_csv": portable_repo_path(report_path),
     }
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 

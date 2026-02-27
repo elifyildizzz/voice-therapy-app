@@ -47,6 +47,25 @@ def env_path_or_default(name: str, fallback: Path) -> Path:
     return Path(os.path.expandvars(raw)).expanduser()
 
 
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def portable_data_path(path: Path, data_root: Path) -> str:
+    try:
+        return str(path.relative_to(data_root))
+    except ValueError:
+        return str(path)
+
+
+def portable_repo_path(path: Path) -> str:
+    root = repo_root()
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
 def parse_args() -> argparse.Namespace:
     load_env_file()
 
@@ -178,6 +197,7 @@ def main() -> None:
                 "ext",
                 "token",
                 "path",
+                "relative_path",
                 "file_size_bytes",
                 "sample_rate_hz",
                 "sample_count",
@@ -249,7 +269,8 @@ def main() -> None:
                             "modality": modality,
                             "ext": ext,
                             "token": token,
-                            "path": str(file_path),
+                            "path": portable_data_path(file_path, data_root),
+                            "relative_path": portable_data_path(file_path, data_root),
                             "file_size_bytes": file_path.stat().st_size,
                             **header_info,
                         }
@@ -284,7 +305,9 @@ def main() -> None:
                     "missing_sentence_egg_tokens": ";".join(missing_sentence_egg),
                     "remarks_flags": remarks_flags,
                     "remarks_excerpt": remarks_excerpt,
-                    "remarks_path": str(remarks_path) if remarks_path else "",
+                    "remarks_path": portable_data_path(remarks_path, data_root)
+                    if remarks_path
+                    else "",
                 }
             )
 
@@ -316,7 +339,8 @@ def main() -> None:
 
     summary = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "data_root": str(data_root),
+        "data_root_env_var": "BITIRME_DATA_ROOT",
+        "data_root_default": "~/Desktop/bitirme/data",
         "subject_count": len(subject_dirs),
         "file_count": sum(ext_counter.values()),
         "file_count_by_extension": dict(ext_counter),
@@ -327,8 +351,8 @@ def main() -> None:
         "top_vowel_tokens": token_counters["vowels"].most_common(20),
         "top_sentence_tokens": token_counters["sentences"].most_common(20),
         "reports": {
-            "subject_audit_csv": str(subject_report_path),
-            "file_audit_csv": str(file_report_path),
+            "subject_audit_csv": portable_repo_path(subject_report_path),
+            "file_audit_csv": portable_repo_path(file_report_path),
         },
     }
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")

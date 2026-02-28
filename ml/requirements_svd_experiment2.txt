@@ -1,0 +1,5 @@
+numpy
+librosa
+praat-parselmouth
+scikit-learn
+imbalanced-learn

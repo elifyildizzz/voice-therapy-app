@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/app_shell_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -16,7 +16,7 @@ class VoiceTherapyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Voice Therapy App',
       theme: AppTheme.build(),
-      home: const HomeScreen(),
+      home: const AppShellScreen(),
     );
   }
 }

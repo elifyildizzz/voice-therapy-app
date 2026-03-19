@@ -6,8 +6,6 @@ import '../widgets/app_top_header.dart';
 import 'breath_control_screen.dart';
 import 'vocal_hygiene_screen.dart';
 import 'vocal_function_exercises_screen.dart';
-import 'voice_analyze_consent_screen.dart';
-import 'warmup_relax_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -43,18 +41,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   _CategoryTile(
-                    icon: Icons.accessibility_new_outlined,
-                    title: 'Isınma - Gevşeme',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const WarmupRelaxScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _CategoryTile(
                     icon: Icons.air,
                     title: 'Nefes Kontrolü',
                     onTap: () {
@@ -78,17 +64,11 @@ class HomeScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 12),
-                  _CategoryTile(
-                    icon: Icons.medical_services_outlined,
-                    title: 'Ses Sağlığı Ön Tarama Testi',
+                  const _CategoryTile(
+                    icon: Icons.assignment_outlined,
+                    title: 'Ses Değerlendirme Testleri',
                     isHighlighted: true,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const VoiceAnalyzeConsentScreen(),
-                        ),
-                      );
-                    },
+                    showChevron: false,
                   ),
                 ],
               ),
@@ -104,14 +84,16 @@ class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
     required this.icon,
     required this.title,
-    required this.onTap,
     this.isHighlighted = false,
+    this.onTap,
+    this.showChevron = true,
   });
 
   final IconData icon;
   final String title;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool isHighlighted;
+  final bool showChevron;
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +130,8 @@ class _CategoryTile extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppTheme.darkBlue),
+              if (showChevron)
+                const Icon(Icons.chevron_right, color: AppTheme.darkBlue),
             ],
           ),
         ),

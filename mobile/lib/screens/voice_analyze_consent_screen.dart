@@ -22,7 +22,11 @@ class VoiceAnalyzeConsentScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(title: 'Ses Sağlığı Ön Tarama Testi'),
+            const AppTopHeader.home(
+              title: 'Ses Sağlığı Ön Tarama Testi',
+              subtitle:
+                  'Kayda başlamadan önce kısa bilgilendirmeyi inceleyin.',
+            ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),

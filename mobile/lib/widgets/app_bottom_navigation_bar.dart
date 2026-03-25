@@ -33,9 +33,10 @@ class AppBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final bottomPadding = bottomInset > 4 ? bottomInset - 2 : 6.0;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(24, 8, 24, bottomInset + 4),
+      padding: EdgeInsets.fromLTRB(24, 2, 24, bottomPadding),
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -79,15 +80,18 @@ class _BottomNavigationAction extends StatelessWidget {
       button: true,
       selected: isSelected,
       label: item.semanticLabel,
-        child: InkResponse(
-          onTap: onTap,
-          radius: 26,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+      child: InkResponse(
+        onTap: onTap,
+        radius: 24,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Transform.translate(
+            offset: const Offset(0, 2),
             child: Icon(
               isSelected ? item.activeIcon : item.icon,
-              size: 29,
-            color: isSelected ? AppTheme.darkBlue : const Color(0xFF7D7D7D),
+              size: 27,
+              color: isSelected ? AppTheme.darkBlue : const Color(0xFF7D7D7D),
+            ),
           ),
         ),
       ),

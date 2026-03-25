@@ -6,6 +6,7 @@ import '../widgets/app_top_header.dart';
 import 'breath_control_screen.dart';
 import 'vocal_hygiene_screen.dart';
 import 'vocal_function_exercises_screen.dart';
+import 'voice_assessment_tests_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -64,11 +65,18 @@ class HomeScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 12),
-                  const _CategoryTile(
+                  _CategoryTile(
                     icon: Icons.assignment_outlined,
                     title: 'Ses Değerlendirme Testleri',
                     isHighlighted: true,
-                    showChevron: false,
+                    showChevron: true,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const VoiceAssessmentTestsScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

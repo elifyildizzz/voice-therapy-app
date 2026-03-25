@@ -2,10 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/main.dart';
 
 void main() {
-  testWidgets('App opens voice analyze screen', (WidgetTester tester) async {
+  testWidgets('App opens home shell with voice assessment entry',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const VoiceTherapyApp());
 
-    expect(find.text('Ses Analizi'), findsOneWidget);
-    expect(find.text('Ses Kaydı Başlat'), findsOneWidget);
+    expect(find.text('Hoşgeldiniz, İlayda'), findsOneWidget);
+    expect(find.text('Ses Değerlendirme Testleri'), findsOneWidget);
   });
 }

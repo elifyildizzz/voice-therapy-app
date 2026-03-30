@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/app_user.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
+import 'auth_screen.dart';
 import 'breath_control_screen.dart';
 import 'vocal_hygiene_screen.dart';
 import 'vocal_function_exercises_screen.dart';
@@ -11,8 +14,67 @@ import 'voice_assessment_tests_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  Future<void> _showLoginRequiredDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Vazgeç'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const AuthScreen(),
+                  ),
+                );
+              },
+              child: const Text('Giriş Yap'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openAssessmentTests(BuildContext context, AppUser? currentUser) {
+    if (currentUser == null) {
+      _showLoginRequiredDialog(
+        context,
+        title: 'Testler için giriş gerekli',
+        message:
+            'Danışan formu ve S/Z testi sonuçlarınızı kaydetmek için önce giriş yapın veya kayıt olun.',
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const VoiceAssessmentTestsScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentUser = AuthService.instance.currentUser;
+    final headerTitle = currentUser == null
+        ? 'Hoş geldiniz'
+        : 'Hoş geldiniz, ${currentUser.firstName}';
+
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light.copyWith(
@@ -21,8 +83,8 @@ class HomeScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const AppTopHeader.home(
-              title: 'Hoşgeldiniz, İlayda',
+            AppTopHeader.home(
+              title: headerTitle,
               subtitle: 'Terapistinizin önerdiği egzersiz kategorisini seçin.',
             ),
             Expanded(
@@ -71,11 +133,7 @@ class HomeScreen extends StatelessWidget {
                     isHighlighted: true,
                     showChevron: true,
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const VoiceAssessmentTestsScreen(),
-                        ),
-                      );
+                      _openAssessmentTests(context, currentUser);
                     },
                   ),
                 ],

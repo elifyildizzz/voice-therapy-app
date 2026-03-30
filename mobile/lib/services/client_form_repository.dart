@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/client_form_record.dart';
+import 'auth_service.dart';
 import 'local_database.dart';
 
 class ClientFormRepository {
@@ -15,7 +16,7 @@ class ClientFormRepository {
   Future<Database> get _database async => LocalDatabase.instance.database;
 
   Future<ClientFormRecord> saveRecord({
-    String userId = defaultUserId,
+    String? userId,
     required int vrqolQ1,
     required int vrqolQ4,
     required int vrqolQ9,
@@ -23,7 +24,7 @@ class ClientFormRepository {
     required int vhiQ9,
   }) async {
     final record = ClientFormRecord.create(
-      userId: userId,
+      userId: userId ?? AuthService.instance.currentUser?.id ?? defaultUserId,
       vrqolQ1: vrqolQ1,
       vrqolQ4: vrqolQ4,
       vrqolQ9: vrqolQ9,
@@ -43,13 +44,15 @@ class ClientFormRepository {
   }
 
   Future<ClientFormRecord?> fetchLatestRecord({
-    String userId = defaultUserId,
+    String? userId,
   }) async {
+    final resolvedUserId =
+        userId ?? AuthService.instance.currentUser?.id ?? defaultUserId;
     final database = await _database;
     final rows = await database.query(
       LocalDatabase.clientFormRecordsTable,
       where: 'user_id = ?',
-      whereArgs: [userId],
+      whereArgs: [resolvedUserId],
       orderBy: 'created_at DESC',
       limit: 1,
     );
@@ -62,13 +65,15 @@ class ClientFormRepository {
   }
 
   Future<List<ClientFormRecord>> fetchRecords({
-    String userId = defaultUserId,
+    String? userId,
   }) async {
+    final resolvedUserId =
+        userId ?? AuthService.instance.currentUser?.id ?? defaultUserId;
     final database = await _database;
     final rows = await database.query(
       LocalDatabase.clientFormRecordsTable,
       where: 'user_id = ?',
-      whereArgs: [userId],
+      whereArgs: [resolvedUserId],
       orderBy: 'created_at DESC',
     );
 

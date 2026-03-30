@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
 class AppBottomNavigationBar extends StatelessWidget {
@@ -9,7 +10,20 @@ class AppBottomNavigationBar extends StatelessWidget {
     super.key,
   });
 
-  static const List<_BottomNavigationItemData> _items = [
+  static const List<_BottomNavigationItemData> _guestItems = [
+    _BottomNavigationItemData(
+      icon: Icons.medical_services_outlined,
+      activeIcon: Icons.medical_services,
+      semanticLabel: 'Ses Sağlığı Ön Tarama Testi',
+    ),
+    _BottomNavigationItemData(
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home_rounded,
+      semanticLabel: 'Ana sayfa',
+    ),
+  ];
+
+  static const List<_BottomNavigationItemData> _authenticatedItems = [
     _BottomNavigationItemData(
       icon: Icons.medical_services_outlined,
       activeIcon: Icons.medical_services,
@@ -32,6 +46,8 @@ class AppBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAuthenticated = AuthService.instance.currentUser != null;
+    final items = isAuthenticated ? _authenticatedItems : _guestItems;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final bottomPadding = bottomInset > 4 ? bottomInset - 2 : 6.0;
 
@@ -49,10 +65,10 @@ class AppBottomNavigationBar extends StatelessWidget {
       ),
       child: Row(
         children: List.generate(
-          _items.length,
+          items.length,
           (index) => Expanded(
             child: _BottomNavigationAction(
-              item: _items[index],
+              item: items[index],
               isSelected: currentIndex == index,
               onTap: () => onTap(index),
             ),

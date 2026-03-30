@@ -9,7 +9,9 @@ class LocalDatabase {
   static const String _databaseName = 'voice_therapy.db';
   static const String szTestRecordsTable = 'sz_test_records';
   static const String clientFormRecordsTable = 'client_form_records';
-  static const int _databaseVersion = 2;
+  static const String usersTable = 'users';
+  static const String authSessionTable = 'auth_session';
+  static const int _databaseVersion = 3;
 
   Database? _database;
 
@@ -25,13 +27,20 @@ class LocalDatabase {
       databasePath,
       version: _databaseVersion,
       onCreate: (db, version) async {
-        await _createSzTestRecordsTable(db);
-        await _createClientFormRecordsTable(db);
+        await _ensureSchema(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           await _createClientFormRecordsTable(db);
         }
+        if (oldVersion < 3) {
+          await _createUsersTable(db);
+          await _createAuthSessionTable(db);
+        }
+      },
+      onOpen: (db) async {
+        // Keep older local installs resilient during hot reload/restart cycles.
+        await _ensureSchema(db);
       },
     );
 
@@ -68,5 +77,34 @@ class LocalDatabase {
         result_label TEXT NOT NULL
       )
     ''');
+  }
+
+  Future<void> _createUsersTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ${LocalDatabase.usersTable} (
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+  }
+
+  Future<void> _createAuthSessionTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ${LocalDatabase.authSessionTable} (
+        user_id TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+  }
+
+  Future<void> _ensureSchema(Database db) async {
+    await _createSzTestRecordsTable(db);
+    await _createClientFormRecordsTable(db);
+    await _createUsersTable(db);
+    await _createAuthSessionTable(db);
   }
 }

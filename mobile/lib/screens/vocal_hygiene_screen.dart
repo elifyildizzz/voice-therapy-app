@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/vocal_hygiene_personalization.dart';
+import '../services/vocal_hygiene_repository.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
 
 class VocalHygieneScreen extends StatefulWidget {
-  const VocalHygieneScreen({super.key});
+  const VocalHygieneScreen({
+    super.key,
+    this.personalizationResult,
+  });
+
+  final VocalHygienePersonalizationResult? personalizationResult;
 
   @override
   State<VocalHygieneScreen> createState() => _VocalHygieneScreenState();
@@ -13,71 +20,160 @@ class VocalHygieneScreen extends StatefulWidget {
 
 class _VocalHygieneScreenState extends State<VocalHygieneScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.88);
-  int _currentPage = 0;
 
-  static const List<_InfoCardData> _infoCards = [
+  int _currentPage = 0;
+  List<_InfoCardData> _cards = _defaultCards;
+  Set<VocalHygieneTopic> _importantTopics = <VocalHygieneTopic>{};
+  Map<VocalHygieneTopic, int> _scores = <VocalHygieneTopic, int>{};
+
+  static const List<_InfoCardData> _defaultCards = <_InfoCardData>[
     _InfoCardData(
+      topic: VocalHygieneTopic.hydration,
       icon: Icons.water_drop_outlined,
       title: 'Hidrasyon',
       description:
-          'Günde en az 2 litre su içmeyi ihmal etme. Ses tellerin nemi sever.',
+          'Gün boyu su tüketimini yay. Düşük hidrasyon ses tellerinde kuruluğu artırır.',
     ),
     _InfoCardData(
+      topic: VocalHygieneTopic.nutrition,
+      icon: Icons.restaurant_outlined,
+      title: 'Beslenme',
+      description:
+          'Asitli, çok baharatlı ve yüksek kafeinli alışkanlıkları dengele. Beslenme ses konforunu etkiler.',
+    ),
+    _InfoCardData(
+      topic: VocalHygieneTopic.voiceUsage,
+      icon: Icons.record_voice_over_outlined,
+      title: 'Ses Kullanımı',
+      description:
+          'Uzun konuşmalarda tonu zorlamadan nefes destekli konuş. Sesi ani yükseltmekten kaçın.',
+    ),
+    _InfoCardData(
+      topic: VocalHygieneTopic.environmentalFactors,
+      icon: Icons.air_outlined,
+      title: 'Çevresel Faktörler',
+      description:
+          'Kuru, tozlu ve gürültülü ortamlarda sesi korumak için mola ve ortam düzenlemesi yap.',
+    ),
+    _InfoCardData(
+      topic: VocalHygieneTopic.irritants,
       icon: Icons.local_cafe_outlined,
-      title: 'Tahriş Edici Maddeler',
+      title: 'Tahriş Ediciler',
       description:
-          'Kafein ve alkol tüketimini sınırla; ses tellerini kurutabilirler.',
+          'Kafein ve sigara dumanı gibi tahriş edicilere maruziyeti azaltmak ses kalitesini destekler.',
     ),
     _InfoCardData(
+      topic: VocalHygieneTopic.voiceRest,
       icon: Icons.hotel_outlined,
-      title: 'Ses İstirahatı',
+      title: 'Ses İstirahati',
       description:
-          'Günün belirli saatlerinde "sessizlik molaları" ver. Sesini dinlendir.',
+          'Ses yorgunluğu dönemlerinde planlı sessizlik molaları vererek toparlanmayı hızlandır.',
     ),
     _InfoCardData(
+      topic: VocalHygieneTopic.throatClearing,
       icon: Icons.local_drink_outlined,
       title: 'Boğaz Temizleme',
       description:
-          'Boğazını sertçe temizlemek yerine bir yudum su içmeyi dene.',
+          'Sert boğaz temizleme yerine yudum su, yutkunma veya nazik öksürük tercih et.',
     ),
     _InfoCardData(
+      topic: VocalHygieneTopic.refluxControl,
       icon: Icons.health_and_safety_outlined,
       title: 'Reflü Kontrolü',
       description:
-          'Uykudan en az 3 saat önce yemek yemeyi keserek asit tahrişini önle.',
+          'Geç saat yemeklerini azalt, yatmadan önce mideyi zorlamamaya çalış. Reflü sesi etkileyebilir.',
     ),
   ];
 
-  static const List<_CategoryData> _categories = [
+  static const List<_CategoryData> _defaultCategories = <_CategoryData>[
     _CategoryData(
       title: 'Beslenme',
-      items: [
-        'Reflü dostu diyet planı uygula; baharatlı ve aşırı asitli yiyecekleri azalt.',
-        'Hidrasyonu gün içine yay; su içmeyi sadece susadığında değil rutin olarak sürdür.',
-        'Ses tellerini kurutabilecek kafeinli içecek ve mentollü ürünleri sınırlı tüket.',
-        'Elma gibi su oranı yüksek meyvelerle vokal nemliliği destekle.',
+      relatedTopics: <VocalHygieneTopic>[
+        VocalHygieneTopic.hydration,
+        VocalHygieneTopic.nutrition,
+        VocalHygieneTopic.irritants,
+        VocalHygieneTopic.refluxControl,
+      ],
+      items: <String>[
+        'Reflü dostu beslenmeye yönel; geç saatte ağır yemeklerden kaçın.',
+        'Günlük su tüketimini gün içine yayarak ses tellerinin nemini koru.',
+        'Yüksek kafein tüketimini kademeli azaltarak vokal tahrişi düşür.',
       ],
     ),
     _CategoryData(
       title: 'Ses Kullanımı',
-      items: [
-        'Doğru konuşma tekniği için göğüs yerine diyafram destekli nefesle konuş.',
-        'Bağırmaktan kaçın; gürültülü ortamlarda sesi zorlamak yerine ortama yaklaş.',
-        'Fısıldamak da ses tellerini yorabilir, düşük ama doğal bir ton tercih et.',
-        'Uzun telefon görüşmelerinde kulaklık kullanarak boyun ve ses yükünü azalt.',
-        'Öksürme ve boğaz temizleme refleksini azaltmak için su ile boğazı nemlendir.',
+      relatedTopics: <VocalHygieneTopic>[
+        VocalHygieneTopic.voiceUsage,
+        VocalHygieneTopic.voiceRest,
+        VocalHygieneTopic.throatClearing,
+      ],
+      items: <String>[
+        'Uzun konuşmalarda sesini zorlamadan, diyafram destekli nefesle konuş.',
+        'Yoğun ses kullanımından sonra kısa sessizlik molaları planla.',
+        'Boğaz temizleme refleksi yerine su yudumlama ve yutkunmayı dene.',
       ],
     ),
     _CategoryData(
       title: 'Çevresel Faktörler',
-      items: [
-        'Oda nem dengesini koru; kuru dönemlerde hava nemlendirici kullan.',
-        'Sigara dumanı ve yoğun kimyasal kokularla doğrudan temastan kaçın.',
-        'Gürültülü ortamlarda ses yönetimi yap; uzun süre yüksek sesle konuşma.',
-        'Tozlu alanlarda kalma süresini azaltarak ses yolunu tahrişten koru.',
+      relatedTopics: <VocalHygieneTopic>[
+        VocalHygieneTopic.environmentalFactors,
+        VocalHygieneTopic.irritants,
+      ],
+      items: <String>[
+        'Gürültülü ortamlarda sesi yükseltmek yerine ortama yaklaşmayı tercih et.',
+        'Kuru ortamlarda hava nemini artırarak boğaz kuruluğunu azalt.',
+        'Sigara dumanı ve kimyasal kokulara maruziyeti mümkün olduğunca sınırla.',
       ],
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _applyInitialPersonalization();
+  }
+
+  Future<void> _applyInitialPersonalization() async {
+    final initialResult = widget.personalizationResult;
+    if (initialResult != null) {
+      _applyPersonalization(initialResult);
+      return;
+    }
+
+    final latestResponse =
+        await VocalHygieneRepository.instance.fetchLatestResponse();
+    if (!mounted || latestResponse == null) {
+      return;
+    }
+
+    final computed = VocalHygienePersonalizer.evaluate(latestResponse);
+    _applyPersonalization(computed);
+  }
+
+  void _applyPersonalization(VocalHygienePersonalizationResult result) {
+    final cardsByTopic = <VocalHygieneTopic, _InfoCardData>{
+      for (final card in _defaultCards) card.topic: card,
+    };
+
+    final ordered = <_InfoCardData>[];
+    for (final topic in result.orderedTopics) {
+      final card = cardsByTopic[topic];
+      if (card != null) {
+        ordered.add(card);
+      }
+    }
+
+    setState(() {
+      _cards = ordered.isEmpty ? _defaultCards : ordered;
+      _importantTopics = result.importantTopics;
+      _scores = result.scores;
+      _currentPage = 0;
+    });
+
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(0);
+    }
+  }
 
   @override
   void dispose() {
@@ -87,6 +183,25 @@ class _VocalHygieneScreenState extends State<VocalHygieneScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final orderedCategories = List<_CategoryData>.from(_defaultCategories)
+      ..sort((a, b) {
+        final aScore = a.relatedTopics.fold<int>(
+          0,
+          (sum, topic) => sum + (_scores[topic] ?? 0),
+        );
+        final bScore = b.relatedTopics.fold<int>(
+          0,
+          (sum, topic) => sum + (_scores[topic] ?? 0),
+        );
+        final byScore = bScore.compareTo(aScore);
+        if (byScore != 0) {
+          return byScore;
+        }
+        return _defaultCategories.indexOf(a).compareTo(
+              _defaultCategories.indexOf(b),
+            );
+      });
+
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light.copyWith(
@@ -100,37 +215,58 @@ class _VocalHygieneScreenState extends State<VocalHygieneScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(0, 16, 0, 24),
                 children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Öneriler cevaplarına göre sıralandı. Öncelikli kartları önce inceleyebilirsin.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: Color(0xFF5F6E84),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   SizedBox(
-                    height: 170,
+                    height: 196,
                     child: PageView.builder(
                       controller: _pageController,
-                      itemCount: _infoCards.length,
+                      itemCount: _cards.length,
                       onPageChanged: (index) {
                         setState(() {
                           _currentPage = index;
                         });
                       },
                       itemBuilder: (context, index) {
-                        final item = _infoCards[index];
+                        final item = _cards[index];
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: _InfoCard(item: item),
+                          child: _InfoCard(
+                            item: item,
+                            isImportant: _importantTopics.contains(item.topic),
+                          ),
                         );
                       },
                     ),
                   ),
                   const SizedBox(height: 12),
                   _PaginationDots(
-                    count: _infoCards.length,
+                    count: _cards.length,
                     currentIndex: _currentPage,
                   ),
                   const SizedBox(height: 18),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
-                      children: _categories
-                          .map((category) => _CategoryCard(category: category))
-                          .toList(),
+                      children: orderedCategories.map((category) {
+                        final isImportantCategory = category.relatedTopics.any(
+                          _importantTopics.contains,
+                        );
+                        return _CategoryCard(
+                          category: category,
+                          isImportant: isImportantCategory,
+                        );
+                      }).toList(),
                     ),
                   ),
                 ],
@@ -144,9 +280,13 @@ class _VocalHygieneScreenState extends State<VocalHygieneScreen> {
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.item});
+  const _InfoCard({
+    required this.item,
+    required this.isImportant,
+  });
 
   final _InfoCardData item;
+  final bool isImportant;
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +295,10 @@ class _InfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(
+          color: isImportant ? const Color(0xFF8BB6C2) : AppTheme.cardBorder,
+          width: isImportant ? 1.6 : 1,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x12000000),
@@ -164,42 +307,64 @@ class _InfoCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: AppTheme.iconBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(item.icon, color: AppTheme.darkBlue),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E1E1E),
-                  ),
+          if (isImportant)
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F3F6),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                'Senin için önemli',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.darkBlue,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  item.description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.35,
-                    color: Color(0xFF4F4F4F),
-                  ),
-                ),
-              ],
+              ),
             ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppTheme.iconBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(item.icon, color: AppTheme.darkBlue),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E1E1E),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.description,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.35,
+                        color: Color(0xFF4F4F4F),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -239,10 +404,40 @@ class _PaginationDots extends StatelessWidget {
   }
 }
 
+class _InfoCardData {
+  const _InfoCardData({
+    required this.topic,
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  final VocalHygieneTopic topic;
+  final IconData icon;
+  final String title;
+  final String description;
+}
+
+class _CategoryData {
+  const _CategoryData({
+    required this.title,
+    required this.relatedTopics,
+    required this.items,
+  });
+
+  final String title;
+  final List<VocalHygieneTopic> relatedTopics;
+  final List<String> items;
+}
+
 class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({required this.category});
+  const _CategoryCard({
+    required this.category,
+    required this.isImportant,
+  });
 
   final _CategoryData category;
+  final bool isImportant;
 
   @override
   Widget build(BuildContext context) {
@@ -252,7 +447,10 @@ class _CategoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(
+          color: isImportant ? const Color(0xFF8BB6C2) : AppTheme.cardBorder,
+          width: isImportant ? 1.4 : 1,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D000000),
@@ -264,6 +462,23 @@ class _CategoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (isImportant)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F3F6),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                'Senin için önemli',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.darkBlue,
+                ),
+              ),
+            ),
           Text(
             category.title,
             style: const TextStyle(
@@ -290,26 +505,4 @@ class _CategoryCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _InfoCardData {
-  const _InfoCardData({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  final IconData icon;
-  final String title;
-  final String description;
-}
-
-class _CategoryData {
-  const _CategoryData({
-    required this.title,
-    required this.items,
-  });
-
-  final String title;
-  final List<String> items;
 }

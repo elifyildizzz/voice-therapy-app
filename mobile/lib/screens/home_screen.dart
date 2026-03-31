@@ -7,7 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
 import 'auth_screen.dart';
 import 'breath_control_screen.dart';
-import 'vocal_hygiene_screen.dart';
+import 'vocal_hygiene_onboarding_screen.dart';
 import 'vocal_function_exercises_screen.dart';
 import 'voice_assessment_tests_screen.dart';
 
@@ -68,6 +68,24 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  void _openVocalHygiene(BuildContext context, AppUser? currentUser) {
+    if (currentUser == null) {
+      _showLoginRequiredDialog(
+        context,
+        title: 'Kişiselleştirme için giriş gerekli',
+        message:
+            'Vokal hijyen cevaplarının hesabına kaydedilmesi ve sana özel sıralama için önce giriş yapın veya kayıt olun.',
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const VocalHygieneOnboardingScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = AuthService.instance.currentUser;
@@ -95,11 +113,7 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.water_drop_outlined,
                     title: 'Vokal Hijyen',
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const VocalHygieneScreen(),
-                        ),
-                      );
+                      _openVocalHygiene(context, currentUser);
                     },
                   ),
                   const SizedBox(height: 12),

@@ -11,7 +11,8 @@ class LocalDatabase {
   static const String clientFormRecordsTable = 'client_form_records';
   static const String usersTable = 'users';
   static const String authSessionTable = 'auth_session';
-  static const int _databaseVersion = 3;
+  static const String vocalHygieneSurveyTable = 'vocal_hygiene_survey';
+  static const int _databaseVersion = 4;
 
   Database? _database;
 
@@ -36,6 +37,9 @@ class LocalDatabase {
         if (oldVersion < 3) {
           await _createUsersTable(db);
           await _createAuthSessionTable(db);
+        }
+        if (oldVersion < 4) {
+          await _createVocalHygieneSurveyTable(db);
         }
       },
       onOpen: (db) async {
@@ -101,10 +105,22 @@ class LocalDatabase {
     ''');
   }
 
+  Future<void> _createVocalHygieneSurveyTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ${LocalDatabase.vocalHygieneSurveyTable} (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        answers_json TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+  }
+
   Future<void> _ensureSchema(Database db) async {
     await _createSzTestRecordsTable(db);
     await _createClientFormRecordsTable(db);
     await _createUsersTable(db);
     await _createAuthSessionTable(db);
+    await _createVocalHygieneSurveyTable(db);
   }
 }

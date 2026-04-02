@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
+import 'breath_control_video_screen.dart';
 import 'warmup_exercise.dart';
-import 'warmup_video_screen.dart';
 
 class BreathControlScreen extends StatelessWidget {
   const BreathControlScreen({super.key});
@@ -59,7 +59,8 @@ class BreathControlScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => WarmupVideoScreen(exercise: item),
+                          builder: (_) =>
+                              BreathControlVideoScreen(exercise: item),
                         ),
                       );
                     },

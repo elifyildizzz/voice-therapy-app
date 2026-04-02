@@ -33,8 +33,8 @@ class AppTopHeader extends StatelessWidget {
           key: key,
         );
 
-  static const double _homeBodyHeight = 154;
-  static const double _backBodyHeight = 126;
+  static const double _homeBodyHeight = 148;
+  static const double _backBodyHeight = 92;
 
   final String title;
   final String? subtitle;
@@ -45,8 +45,8 @@ class AppTopHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
     final bodyHeight = showBackButton ? _backBodyHeight : _homeBodyHeight;
-    final topPadding = showBackButton ? topInset + 8 : topInset + 10;
-    final bottomPadding = showBackButton ? 12.0 : 14.0;
+    final topPadding = showBackButton ? topInset + 6 : topInset + 10;
+    final bottomPadding = showBackButton ? 10.0 : 14.0;
 
     return Container(
       width: double.infinity,
@@ -54,44 +54,46 @@ class AppTopHeader extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16, topPadding, 16, bottomPadding),
       decoration: const BoxDecoration(
         color: AppTheme.darkBlue,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(18)),
       ),
       child: showBackButton ? _buildBackHeader(context) : _buildHomeHeader(),
     );
   }
 
   Widget _buildBackHeader(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 10),
         GestureDetector(
           onTap: onBackPressed ?? () => Navigator.of(context).pop(),
           behavior: HitTestBehavior.opaque,
           child: const SizedBox(
             width: 40,
-            height: 32,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 28,
-              ),
+            height: 40,
+            child: Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+              size: 24,
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        Text(
-          title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
           ),
+        ),
+        const SizedBox(
+          width: 40,
+          height: 40,
         ),
       ],
     );
@@ -101,7 +103,7 @@ class AppTopHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 34),
+        const SizedBox(height: 28),
         Text(
           title,
           style: const TextStyle(

@@ -8,6 +8,9 @@ class WarmupExercise {
     required this.level,
     required this.levelColor,
     required this.levelTextColor,
+    this.videoAssetPath,
+    this.thumbnailAssetPath,
+    this.durationLabel,
   });
 
   final String titleTr;
@@ -16,4 +19,7 @@ class WarmupExercise {
   final String level;
   final Color levelColor;
   final Color levelTextColor;
+  final String? videoAssetPath;
+  final String? thumbnailAssetPath;
+  final String? durationLabel;
 }

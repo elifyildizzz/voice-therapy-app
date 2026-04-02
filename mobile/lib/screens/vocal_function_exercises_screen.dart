@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
+import 'vocal_exercise_video_screen.dart';
 import 'warmup_exercise.dart';
-import 'warmup_video_screen.dart';
 
 class VocalFunctionExercisesScreen extends StatelessWidget {
   const VocalFunctionExercisesScreen({super.key});
@@ -12,15 +12,18 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
   static const List<WarmupExercise> _exercises = [
     WarmupExercise(
       titleTr: 'Egzersiz 1',
-      titleEn: 'Exercise 1',
+      titleEn: 'Dudak Trill',
       durationMinutes: 3,
+      durationLabel: '00:09',
       level: 'Kolay',
       levelColor: Color(0xFFBEE9CB),
       levelTextColor: Color(0xFF2D6B3F),
+      videoAssetPath: 'assets/videos/vocal_function/exercise_1.mp4',
+      thumbnailAssetPath: 'assets/videos/vocal_function/exercise_1_thumb.jpg',
     ),
     WarmupExercise(
       titleTr: 'Egzersiz 2',
-      titleEn: 'Exercise 2',
+      titleEn: 'Dil Trill',
       durationMinutes: 4,
       level: 'Orta',
       levelColor: Color(0xFFF2DEB8),
@@ -28,7 +31,7 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
     ),
     WarmupExercise(
       titleTr: 'Egzersiz 3',
-      titleEn: 'Exercise 3',
+      titleEn: 'Humming',
       durationMinutes: 5,
       level: 'Kolay',
       levelColor: Color(0xFFBEE9CB),
@@ -59,7 +62,8 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => WarmupVideoScreen(exercise: item),
+                          builder: (_) =>
+                              VocalExerciseVideoScreen(exercise: item),
                         ),
                       );
                     },
@@ -85,6 +89,10 @@ class _ExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasThumbnail = exercise.thumbnailAssetPath != null;
+    final durationText =
+        exercise.durationLabel ?? '${exercise.durationMinutes} dk';
+
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
@@ -108,10 +116,32 @@ class _ExerciseCard extends StatelessWidget {
                     color: AppTheme.darkBlue,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
-                    color: Colors.white,
-                    size: 30,
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (hasThumbnail)
+                        Image.asset(
+                          exercise.thumbnailAssetPath!,
+                          fit: BoxFit.cover,
+                        )
+                      else
+                        const ColoredBox(color: AppTheme.darkBlue),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(
+                            alpha: hasThumbnail ? 0.18 : 0,
+                          ),
+                        ),
+                      ),
+                      const Center(
+                        child: Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -121,16 +151,16 @@ class _ExerciseCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      exercise.titleTr,
+                      exercise.titleEn,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E1E1E),
+                        color: Color(0xFF2D3643),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      exercise.titleEn,
+                      exercise.titleTr,
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF888888),
@@ -146,29 +176,10 @@ class _ExerciseCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '${exercise.durationMinutes} dk',
+                          durationText,
                           style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF8E8E93),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: exercise.levelColor,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            exercise.level,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: exercise.levelTextColor,
-                            ),
                           ),
                         ),
                       ],

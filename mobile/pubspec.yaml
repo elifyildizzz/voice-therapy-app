@@ -16,6 +16,7 @@ dependencies:
   http: ^1.2.2
   sqflite: ^2.3.3+1
   crypto: ^3.0.6
+  video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:
@@ -24,3 +25,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/videos/vocal_function/
+    - assets/videos/breath_control/

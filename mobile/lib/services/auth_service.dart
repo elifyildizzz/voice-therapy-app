@@ -112,6 +112,53 @@ class AuthService {
     currentUserNotifier.value = null;
   }
 
+  Future<AppUser> updateCurrentUserProfile({
+    required String firstName,
+    required String lastName,
+    required String email,
+  }) async {
+    final currentUser = currentUserNotifier.value;
+    if (currentUser == null) {
+      throw AuthException('Aktif kullanıcı bulunamadı.');
+    }
+
+    final cleanFirstName = firstName.trim();
+    final cleanLastName = lastName.trim();
+    final normalizedEmail = email.trim().toLowerCase();
+
+    if (cleanFirstName.isEmpty || cleanLastName.isEmpty) {
+      throw AuthException('Ad ve soyad alanları boş bırakılamaz.');
+    }
+    if (!_isValidEmail(normalizedEmail)) {
+      throw AuthException('Geçerli bir e-posta adresi girin.');
+    }
+
+    final database = await LocalDatabase.instance.database;
+    final existingUser = await _findUserByEmail(database, normalizedEmail);
+    if (existingUser != null && existingUser.id != currentUser.id) {
+      throw AuthException('Bu e-posta ile kayıtlı bir hesap zaten var.');
+    }
+
+    await database.update(
+      LocalDatabase.usersTable,
+      <String, Object?>{
+        'email': normalizedEmail,
+        'first_name': cleanFirstName,
+        'last_name': cleanLastName,
+      },
+      where: 'id = ?',
+      whereArgs: <Object?>[currentUser.id],
+    );
+
+    final updatedUser = await _findUserById(database, currentUser.id);
+    if (updatedUser == null) {
+      throw AuthException('Profil güncellenemedi, tekrar deneyin.');
+    }
+
+    currentUserNotifier.value = updatedUser;
+    return updatedUser;
+  }
+
   Future<AppUser?> _findUserByEmail(Database database, String email) async {
     final rows = await database.query(
       LocalDatabase.usersTable,

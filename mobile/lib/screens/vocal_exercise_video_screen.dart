@@ -101,11 +101,9 @@ class _VocalExerciseVideoScreenState extends State<VocalExerciseVideoScreen> {
       });
     } catch (_) {
       await controller.dispose();
-      if (!mounted) {
-        return;
+      if (mounted) {
+        _showMessage('Video yüklenemedi.');
       }
-
-      _showMessage('Video yüklenemedi.');
     } finally {
       if (mounted) {
         setState(() {
@@ -249,7 +247,7 @@ class _VocalExerciseVideoScreenState extends State<VocalExerciseVideoScreen> {
             AppTopHeader.withBack(title: widget.exercise.titleEn),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -313,16 +311,10 @@ class _TherapistVideoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: AppTheme.cardBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+        boxShadow: AppTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,28 +322,21 @@ class _TherapistVideoCard extends StatelessWidget {
           Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(22),
               onTap: canTogglePlayback
                   ? () => unawaited(onTogglePlayback())
                   : null,
               child: Container(
                 height: 220,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF48546B),
-                      Color(0xFF72829B),
-                    ],
-                  ),
+                  color: AppTheme.soft,
+                  borderRadius: BorderRadius.circular(22),
                 ),
                 child: Stack(
                   children: [
                     Positioned.fill(
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(22),
                         child: isVideoReady && controller != null
                             ? Stack(
                                 fit: StackFit.expand,
@@ -366,101 +351,70 @@ class _TherapistVideoCard extends StatelessWidget {
                                   ),
                                   DecoratedBox(
                                     decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.black.withValues(alpha: 0.04),
-                                          Colors.black.withValues(alpha: 0.18),
-                                        ],
-                                      ),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.08),
                                     ),
                                   ),
                                 ],
                               )
-                            : DecoratedBox(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(18),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Colors.white.withValues(alpha: 0.08),
-                                      Colors.transparent,
-                                    ],
-                                  ),
-                                ),
-                              ),
+                            : const _VideoPlaceholder(),
                       ),
                     ),
                     Center(
                       child: isVideoLoading
                           ? const SizedBox(
-                              width: 32,
-                              height: 32,
+                              width: 34,
+                              height: 34,
                               child: CircularProgressIndicator(
-                                strokeWidth: 2.8,
+                                strokeWidth: 2.5,
                                 color: Colors.white,
                               ),
                             )
                           : AnimatedOpacity(
                               duration: const Duration(milliseconds: 180),
-                              opacity: isPlaying ? 0.0 : 1.0,
+                              opacity: isPlaying ? 0 : 1,
                               child: Container(
-                                width: 88,
-                                height: 88,
+                                width: 84,
+                                height: 84,
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.18),
+                                  color: AppTheme.card.withValues(alpha: 0.84),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   Icons.play_arrow_rounded,
-                                  size: 48,
-                                  color: Colors.white,
+                                  size: 46,
+                                  color: AppTheme.primary,
                                 ),
                               ),
                             ),
-                    ),
-                    Positioned(
-                      right: 16,
-                      bottom: 16,
-                      child: Text(
-                        videoDuration == null
-                            ? '${exercise.durationMinutes} dk'
-                            : _formatVideoDuration(videoDuration),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Text(
             exercise.titleEn,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF556273),
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Text(
             hasVideoAsset
-                ? 'Video bir kez oynar ve sonda durur. Tekrar oynatmak için oynat düğmesine basabilirsin.'
-                : 'Terapistin dudak, nefes ve ses akışını videodan izleyin. Gerçek video dosyanızı daha sonra bu kartın içine yerleştirip aynı ekranda kullanıcı grafiğini altta canlı tutabilirsiniz.',
+                ? 'Video bir kez oynar ve sonda durur. Tekrar oynatmak için oynat düğmesine basabilirsiniz.'
+                : 'Bu bölüm video akışını göstermek için hazır durumda tutulur.',
             style: const TextStyle(
               fontSize: 14,
+              color: AppTheme.textMuted,
               height: 1.45,
-              color: Color(0xFF354254),
             ),
           ),
           if (canTogglePlayback && controller != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             ClipRRect(
               borderRadius: BorderRadius.circular(999),
               child: VideoProgressIndicator(
@@ -468,9 +422,9 @@ class _TherapistVideoCard extends StatelessWidget {
                 allowScrubbing: true,
                 padding: EdgeInsets.zero,
                 colors: const VideoProgressColors(
-                  playedColor: AppTheme.darkBlue,
-                  bufferedColor: Color(0xFFB8C6D6),
-                  backgroundColor: Color(0xFFE3EAF1),
+                  playedColor: AppTheme.primary,
+                  bufferedColor: AppTheme.sand,
+                  backgroundColor: AppTheme.soft,
                 ),
               ),
             ),
@@ -482,7 +436,7 @@ class _TherapistVideoCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF617185),
+                    color: AppTheme.textMuted,
                   ),
                 ),
                 const Spacer(),
@@ -491,7 +445,7 @@ class _TherapistVideoCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF617185),
+                    color: AppTheme.textMuted,
                   ),
                 ),
               ],
@@ -510,17 +464,38 @@ class _TherapistVideoCard extends StatelessWidget {
   }
 }
 
+class _VideoPlaceholder extends StatelessWidget {
+  const _VideoPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFDCE7E1),
+            Color(0xFFEDF4F0),
+          ],
+        ),
+      ),
+      child: SizedBox.expand(),
+    );
+  }
+}
+
 class _InstructionCard extends StatelessWidget {
   const _InstructionCard();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F9FC),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFD8E4EC)),
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppTheme.cardBorder),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,32 +503,36 @@ class _InstructionCard extends StatelessWidget {
           Text(
             'Kullanım Akışı',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppTheme.darkBlue,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Videodaki trill hareketini ve ses yüksekliğini takip edin.',
+            style: TextStyle(
+              fontSize: 15,
+              color: AppTheme.textMuted,
+              height: 1.45,
             ),
           ),
           SizedBox(height: 10),
           Text(
-            'Videodaki trill hareketini ve ses yüksekliğini takip edin.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF344254)),
-          ),
-          SizedBox(height: 6),
-          Text(
             'Başlat düğmesine bastığınızda mikrofon açılır ve sesinizin pitch değeri anlık olarak çizilir.',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
+              color: AppTheme.textMuted,
               height: 1.45,
-              color: Color(0xFF344254),
             ),
           ),
-          SizedBox(height: 6),
+          SizedBox(height: 10),
           Text(
             'Sessizlikte veya güvenilir olmayan anlarda çizgi kopar, böylece grafik yanıltıcı olmaz.',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
+              color: AppTheme.textMuted,
               height: 1.45,
-              color: Color(0xFF344254),
             ),
           ),
         ],
@@ -582,11 +561,12 @@ class _LivePitchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -599,7 +579,7 @@ class _LivePitchCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.darkBlue,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
               ),
@@ -609,7 +589,7 @@ class _LivePitchCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -617,58 +597,52 @@ class _LivePitchCard extends StatelessWidget {
                 currentHz == null ? '--' : currentHz!.toStringAsFixed(1),
                 style: const TextStyle(
                   fontSize: 36,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E2B3C),
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primary,
+                  height: 1,
                 ),
               ),
               const SizedBox(width: 8),
               const Padding(
-                padding: EdgeInsets.only(bottom: 8),
+                padding: EdgeInsets.only(bottom: 6),
                 child: Text(
                   'Hz',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF6A7788),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textMuted,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           const Text(
             'Grafik son birkaç saniyeyi daha hassas gösterecek şekilde ayarlanmıştır; küçük pitch değişimleri de daha belirgin görünür.',
             style: TextStyle(
               fontSize: 14,
               height: 1.45,
-              color: Color(0xFF536174),
+              color: AppTheme.textMuted,
             ),
           ),
           const SizedBox(height: 16),
           LivePitchChart(points: points),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: isBusy ? null : onToggle,
               style: FilledButton.styleFrom(
                 backgroundColor:
-                    isListening ? const Color(0xFFE56A6A) : AppTheme.darkBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                    isListening ? AppTheme.terracotta : AppTheme.primary,
               ),
               icon: Icon(
-                isListening ? Icons.stop_circle_outlined : Icons.mic_rounded,
+                isListening
+                    ? Icons.stop_circle_outlined
+                    : Icons.mic_none_rounded,
               ),
               label: Text(
                 isListening ? 'Dinlemeyi Durdur' : 'Canlı Analizi Başlat',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
               ),
             ),
           ),
@@ -689,21 +663,16 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        isActive ? const Color(0xFFD7F2E7) : const Color(0xFFEAEFF5);
-    final foregroundColor =
-        isActive ? const Color(0xFF1F7C58) : const Color(0xFF637285);
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: isActive ? AppTheme.soft : AppTheme.sand.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: foregroundColor,
+          color: isActive ? AppTheme.primary : AppTheme.textMuted,
           fontWeight: FontWeight.w700,
           fontSize: 12,
         ),

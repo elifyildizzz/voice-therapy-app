@@ -16,8 +16,8 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
       durationMinutes: 3,
       durationLabel: '00:09',
       level: 'Kolay',
-      levelColor: Color(0xFFBEE9CB),
-      levelTextColor: Color(0xFF2D6B3F),
+      levelColor: AppTheme.soft,
+      levelTextColor: AppTheme.primary,
       videoAssetPath: 'assets/videos/vocal_function/exercise_1.mp4',
       thumbnailAssetPath: 'assets/videos/vocal_function/exercise_1_thumb.jpg',
     ),
@@ -26,16 +26,16 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
       titleEn: 'Dil Trill',
       durationMinutes: 4,
       level: 'Orta',
-      levelColor: Color(0xFFF2DEB8),
-      levelTextColor: Color(0xFF92672A),
+      levelColor: AppTheme.sand,
+      levelTextColor: AppTheme.terracotta,
     ),
     WarmupExercise(
       titleTr: 'Egzersiz 3',
       titleEn: 'Humming',
       durationMinutes: 5,
       level: 'Kolay',
-      levelColor: Color(0xFFBEE9CB),
-      levelTextColor: Color(0xFF2D6B3F),
+      levelColor: AppTheme.soft,
+      levelTextColor: AppTheme.primary,
     ),
   ];
 
@@ -52,7 +52,7 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
             const AppTopHeader.withBack(title: 'Vokal Fonksiyon Egzersizleri'),
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 itemCount: _exercises.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 14),
                 itemBuilder: (context, index) {
@@ -94,58 +94,54 @@ class _ExerciseCard extends StatelessWidget {
         exercise.durationLabel ?? '${exercise.durationMinutes} dk';
 
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(12),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
+            color: AppTheme.card,
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.cardBorder),
-            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppTheme.softShadow,
           ),
           child: Row(
             children: [
-              GestureDetector(
-                onTap: onTap,
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkBlue,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (hasThumbnail)
-                        Image.asset(
-                          exercise.thumbnailAssetPath!,
-                          fit: BoxFit.cover,
-                        )
-                      else
-                        const ColoredBox(color: AppTheme.darkBlue),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(
-                            alpha: hasThumbnail ? 0.18 : 0,
-                          ),
-                        ),
+              Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: AppTheme.light.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (hasThumbnail)
+                      Image.asset(
+                        exercise.thumbnailAssetPath!,
+                        fit: BoxFit.cover,
                       ),
-                      const Center(
-                        child: Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 30,
-                        ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: hasThumbnail
+                            ? Colors.black.withValues(alpha: 0.16)
+                            : AppTheme.light.withValues(alpha: 0.2),
                       ),
-                    ],
-                  ),
+                    ),
+                    const Center(
+                      child: Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 36,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,33 +149,34 @@ class _ExerciseCard extends StatelessWidget {
                     Text(
                       exercise.titleEn,
                       style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2D3643),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       exercise.titleTr,
                       style: const TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF888888),
+                        color: AppTheme.textMuted,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         const Icon(
-                          Icons.access_time,
+                          Icons.schedule_rounded,
                           size: 16,
-                          color: Color(0xFF8E8E93),
+                          color: AppTheme.textMuted,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           durationText,
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF8E8E93),
+                            color: AppTheme.textMuted,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -189,9 +186,9 @@ class _ExerciseCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const Icon(
-                Icons.chevron_right,
-                color: Color(0xFF8E8E93),
-                size: 24,
+                Icons.arrow_forward_ios_rounded,
+                color: AppTheme.textMuted,
+                size: 18,
               ),
             ],
           ),

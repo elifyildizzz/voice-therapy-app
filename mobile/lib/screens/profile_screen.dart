@@ -8,6 +8,7 @@ import '../services/client_form_repository.dart';
 import '../services/sz_test_repository.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_formatters.dart';
+import 'sz_test_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -72,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     : '${user.firstName} ${user.lastName}'.trim();
 
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                   children: [
                     _ProfileHeaderCard(
                       fullName: fullName,
@@ -140,10 +141,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (items.isEmpty) {
           content.add(
-            const _EmptyStateCard(
+            _EmptyStateCard(
               icon: Icons.straighten_rounded,
               title: 'Henüz ölçüm kaydı yok',
               message: 'S/Z testi sonuçlarınız burada listelenecek.',
+              actionLabel: 'İlk Ölçümü Ekle',
+              onActionPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const SzTestScreen(),
+                  ),
+                );
+              },
             ),
           );
           return content;
@@ -370,167 +379,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _openProfileEditor(AppUser user) async {
-    final firstNameController = TextEditingController(text: user.firstName);
-    final lastNameController = TextEditingController(text: user.lastName);
-    final emailController = TextEditingController(text: user.email);
-    final formKey = GlobalKey<FormState>();
-    var isSubmitting = false;
-
-    await showModalBottomSheet<void>(
+    final result = await showModalBottomSheet<_ProfileEditorResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                20,
-                20,
-                20 + MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Profili Düzenle',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.darkBlue,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Form(
-                      key: formKey,
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: firstNameController,
-                            textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                              labelText: 'Ad',
-                            ),
-                            validator: (value) {
-                              if ((value ?? '').trim().isEmpty) {
-                                return 'Ad alanı boş bırakılamaz.';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            controller: lastNameController,
-                            textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                              labelText: 'Soyad',
-                            ),
-                            validator: (value) {
-                              if ((value ?? '').trim().isEmpty) {
-                                return 'Soyad alanı boş bırakılamaz.';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            controller: emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.done,
-                            decoration: const InputDecoration(
-                              labelText: 'E-posta',
-                            ),
-                            validator: (value) {
-                              final text = (value ?? '').trim();
-                              if (text.isEmpty) {
-                                return 'E-posta alanı zorunludur.';
-                              }
-                              final emailRegex =
-                                  RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-                              if (!emailRegex.hasMatch(text)) {
-                                return 'Geçerli bir e-posta adresi girin.';
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    FilledButton(
-                      onPressed: isSubmitting
-                          ? null
-                          : () async {
-                              final form = formKey.currentState;
-                              if (form == null || !form.validate()) {
-                                return;
-                              }
-
-                              setSheetState(() {
-                                isSubmitting = true;
-                              });
-
-                              try {
-                                await AuthService.instance
-                                    .updateCurrentUserProfile(
-                                  firstName: firstNameController.text,
-                                  lastName: lastNameController.text,
-                                  email: emailController.text,
-                                );
-                                if (sheetContext.mounted) {
-                                  Navigator.of(sheetContext).pop();
-                                }
-                                _showSnackBar(
-                                  'Profil bilgileri güncellendi.',
-                                  const Color(0xFF1F7A45),
-                                );
-                              } on AuthException catch (error) {
-                                _showSnackBar(
-                                    error.message, const Color(0xFFB42318));
-                              } finally {
-                                if (sheetContext.mounted) {
-                                  setSheetState(() {
-                                    isSubmitting = false;
-                                  });
-                                }
-                              }
-                            },
-                      child: Text(isSubmitting ? 'Kaydediliyor...' : 'Kaydet'),
-                    ),
-                    const SizedBox(height: 10),
-                    TextButton.icon(
-                      onPressed: isSubmitting
-                          ? null
-                          : () async {
-                              if (sheetContext.mounted) {
-                                Navigator.of(sheetContext).pop();
-                              }
-                              await AuthService.instance.signOut();
-                            },
-                      icon: const Icon(Icons.logout_rounded),
-                      label: const Text('Çıkış Yap'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF7A1B1B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder: (_) => _ProfileEditorSheet(user: user),
     );
 
-    firstNameController.dispose();
-    lastNameController.dispose();
-    emailController.dispose();
+    if (!mounted || result == null) {
+      return;
+    }
+
+    switch (result) {
+      case _ProfileEditorSuccess():
+        _showSnackBar(
+          'Profil bilgileri güncellendi.',
+          const Color(0xFF1F7A45),
+        );
+      case _ProfileEditorError(:final message):
+        _showSnackBar(message, const Color(0xFFB42318));
+      case _ProfileEditorSignedOut():
+        await AuthService.instance.signOut();
+    }
   }
 
   void _showSnackBar(String message, Color textColor) {
@@ -549,6 +422,198 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: textColor,
             fontWeight: FontWeight.w600,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+sealed class _ProfileEditorResult {
+  const _ProfileEditorResult();
+}
+
+class _ProfileEditorSuccess extends _ProfileEditorResult {
+  const _ProfileEditorSuccess();
+}
+
+class _ProfileEditorSignedOut extends _ProfileEditorResult {
+  const _ProfileEditorSignedOut();
+}
+
+class _ProfileEditorError extends _ProfileEditorResult {
+  const _ProfileEditorError(this.message);
+
+  final String message;
+}
+
+class _ProfileEditorSheet extends StatefulWidget {
+  const _ProfileEditorSheet({
+    required this.user,
+  });
+
+  final AppUser user;
+
+  @override
+  State<_ProfileEditorSheet> createState() => _ProfileEditorSheetState();
+}
+
+class _ProfileEditorSheetState extends State<_ProfileEditorSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _firstNameController;
+  late final TextEditingController _lastNameController;
+  late final TextEditingController _emailController;
+
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _firstNameController = TextEditingController(text: widget.user.firstName);
+    _lastNameController = TextEditingController(text: widget.user.lastName);
+    _emailController = TextEditingController(text: widget.user.email);
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final form = _formKey.currentState;
+    if (form == null || !form.validate() || _isSubmitting) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      await AuthService.instance.updateCurrentUserProfile(
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        email: _emailController.text,
+      );
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop(const _ProfileEditorSuccess());
+    } on AuthException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop(_ProfileEditorError(error.message));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  void _signOut() {
+    if (_isSubmitting) {
+      return;
+    }
+    Navigator.of(context).pop(const _ProfileEditorSignedOut());
+  }
+
+  String? _validateRequired(String? value, String fieldLabel) {
+    if ((value ?? '').trim().isEmpty) {
+      return '$fieldLabel alanı boş bırakılamaz.';
+    }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    final text = (value ?? '').trim();
+    if (text.isEmpty) {
+      return 'E-posta alanı zorunludur.';
+    }
+    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    if (!emailRegex.hasMatch(text)) {
+      return 'Geçerli bir e-posta adresi girin.';
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        20 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Profili Düzenle',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.darkBlue,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _firstNameController,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Ad',
+                    ),
+                    validator: (value) => _validateRequired(value, 'Ad'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _lastNameController,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Soyad',
+                    ),
+                    validator: (value) => _validateRequired(value, 'Soyad'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    decoration: const InputDecoration(
+                      labelText: 'E-posta',
+                    ),
+                    validator: _validateEmail,
+                    onFieldSubmitted: (_) => _submit(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            FilledButton(
+              onPressed: _isSubmitting ? null : _submit,
+              child: Text(_isSubmitting ? 'Kaydediliyor...' : 'Kaydet'),
+            ),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: _isSubmitting ? null : _signOut,
+              icon: const Icon(Icons.logout_rounded),
+              label: const Text('Çıkış Yap'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF7A1B1B),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -578,26 +643,46 @@ class _ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final segments = fullName.trim().split(RegExp(r'\s+'));
+    final initials = segments.isEmpty
+        ? 'P'
+        : segments
+            .take(2)
+            .map((part) => part.isEmpty ? '' : part[0].toUpperCase())
+            .join();
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8ECEF)),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primary,
+            AppTheme.light,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Row(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF2F6),
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white.withValues(alpha: 0.16),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
             ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 30,
-              color: Color(0xFF3B5A73),
+            alignment: Alignment.center,
+            child: Text(
+              initials,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -608,17 +693,18 @@ class _ProfileHeaderCard extends StatelessWidget {
                 Text(
                   fullName,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.darkBlue,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(
                   lastSessionDate,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF5F6E84),
+                    color: Color(0xFFE7EFEA),
                   ),
                 ),
               ],
@@ -629,7 +715,7 @@ class _ProfileHeaderCard extends StatelessWidget {
             splashRadius: 22,
             icon: const Icon(
               Icons.edit_outlined,
-              color: Color(0xFF5C6874),
+              color: Colors.white,
             ),
           ),
         ],
@@ -649,30 +735,38 @@ class _ProfileTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _TabButton(
-            title: 'Ölçümler',
-            isActive: activeTab == _ProfileTab.measurements,
-            onTap: () => onTabSelected(_ProfileTab.measurements),
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _TabButton(
+              title: 'Ölçümler',
+              isActive: activeTab == _ProfileTab.measurements,
+              onTap: () => onTabSelected(_ProfileTab.measurements),
+            ),
           ),
-        ),
-        Expanded(
-          child: _TabButton(
-            title: 'Anketler',
-            isActive: activeTab == _ProfileTab.questionnaires,
-            onTap: () => onTabSelected(_ProfileTab.questionnaires),
+          Expanded(
+            child: _TabButton(
+              title: 'Anketler',
+              isActive: activeTab == _ProfileTab.questionnaires,
+              onTap: () => onTabSelected(_ProfileTab.questionnaires),
+            ),
           ),
-        ),
-        Expanded(
-          child: _TabButton(
-            title: 'Aktivite',
-            isActive: activeTab == _ProfileTab.activity,
-            onTap: () => onTabSelected(_ProfileTab.activity),
+          Expanded(
+            child: _TabButton(
+              title: 'Aktivite',
+              isActive: activeTab == _ProfileTab.activity,
+              onTap: () => onTabSelected(_ProfileTab.activity),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -690,37 +784,25 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Column(
-          children: [
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive
-                    ? const Color(0xFF2F587A)
-                    : const Color(0xFF7B8794),
-              ),
+    return Material(
+      color: isActive ? AppTheme.primary : Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+              color: isActive ? Colors.white : AppTheme.textMuted,
             ),
-            const SizedBox(height: 8),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              height: 3,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: isActive ? const Color(0xFF6EA6C8) : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -742,15 +824,14 @@ class _ProgressTrendCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.trending_up_rounded,
-                  color: Color(0xFF2D66D8), size: 22),
+              Icon(Icons.bar_chart_rounded, color: AppTheme.primary, size: 22),
               SizedBox(width: 8),
               Text(
                 'İlerleme Trendi',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.darkBlue,
+                  color: AppTheme.textPrimary,
                 ),
               ),
             ],
@@ -763,7 +844,7 @@ class _ProgressTrendCard extends StatelessWidget {
                 'Grafik için en az 2 ölçüm kaydı gerekli.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF5F6E84),
+                  color: AppTheme.textMuted,
                 ),
               ),
             )
@@ -856,15 +937,15 @@ class _TrendChartPainter extends CustomPainter {
     final chartHeight = size.height - topPadding - bottomPadding;
 
     final gridPaint = Paint()
-      ..color = const Color(0xFFE8EDF4)
+      ..color = AppTheme.cardBorder
       ..strokeWidth = 1;
     final linePaint = Paint()
-      ..color = const Color(0xFF3A7BE0)
+      ..color = AppTheme.primary
       ..strokeWidth = 2.8
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-    final pointPaint = Paint()..color = const Color(0xFF3A7BE0);
+    final pointPaint = Paint()..color = AppTheme.primary;
 
     for (var i = 0; i < 4; i++) {
       final y = topPadding + (chartHeight * i / 3);
@@ -931,9 +1012,9 @@ class _InsightsCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF3FB),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFDCE7F7)),
+        color: AppTheme.soft,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -941,14 +1022,14 @@ class _InsightsCard extends StatelessWidget {
           const Row(
             children: [
               Icon(Icons.auto_awesome_outlined,
-                  color: Color(0xFF2D66D8), size: 22),
+                  color: AppTheme.terracotta, size: 22),
               SizedBox(width: 8),
               Text(
                 'Klinik İçgörüler',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.darkBlue,
+                  color: AppTheme.textPrimary,
                 ),
               ),
             ],
@@ -965,7 +1046,7 @@ class _InsightsCard extends StatelessWidget {
                     child: Icon(
                       Icons.circle,
                       size: 8,
-                      color: Color(0xFF2D66D8),
+                      color: AppTheme.terracotta,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -975,7 +1056,7 @@ class _InsightsCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 14,
                         height: 1.45,
-                        color: Color(0xFF3A4758),
+                        color: AppTheme.textMuted,
                       ),
                     ),
                   ),
@@ -1006,7 +1087,7 @@ class _MeasurementCard extends StatelessWidget {
             item.date,
             style: const TextStyle(
               fontSize: 14,
-              color: Color(0xFF5F6E84),
+              color: AppTheme.textMuted,
             ),
           ),
           const SizedBox(height: 12),
@@ -1022,7 +1103,7 @@ class _MeasurementCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF5F6E84),
+                        color: AppTheme.textMuted,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1034,7 +1115,7 @@ class _MeasurementCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1F2937),
+                            color: AppTheme.textPrimary,
                             height: 1,
                           ),
                         ),
@@ -1047,7 +1128,7 @@ class _MeasurementCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF1F2937),
+                                color: AppTheme.textPrimary,
                               ),
                             ),
                           ),
@@ -1084,7 +1165,7 @@ class _QuestionnaireCard extends StatelessWidget {
             item.date,
             style: const TextStyle(
               fontSize: 14,
-              color: Color(0xFF5F6E84),
+              color: AppTheme.textMuted,
             ),
           ),
           const SizedBox(height: 10),
@@ -1096,7 +1177,7 @@ class _QuestionnaireCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.darkBlue,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
               ),
@@ -1110,7 +1191,7 @@ class _QuestionnaireCard extends StatelessWidget {
           RichText(
             text: TextSpan(
               style: const TextStyle(
-                color: Color(0xFF1F2937),
+                color: AppTheme.textPrimary,
                 fontSize: 14,
               ),
               children: [
@@ -1118,7 +1199,7 @@ class _QuestionnaireCard extends StatelessWidget {
                   text: 'Skor ',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF6B7784),
+                    color: AppTheme.textMuted,
                   ),
                 ),
                 TextSpan(
@@ -1151,13 +1232,13 @@ class _ActivityCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: const Color(0xFFE9F1F5),
-              borderRadius: BorderRadius.circular(12),
+              color: AppTheme.soft,
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               Icons.check_rounded,
               size: 20,
-              color: Color(0xFF3F6A87),
+              color: AppTheme.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -1169,7 +1250,7 @@ class _ActivityCard extends StatelessWidget {
                   item.date,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF5F6E84),
+                    color: AppTheme.textMuted,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1178,7 +1259,7 @@ class _ActivityCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.darkBlue,
+                    color: AppTheme.primary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1187,7 +1268,7 @@ class _ActivityCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F2937),
+                    color: AppTheme.textPrimary,
                   ),
                 ),
               ],
@@ -1204,18 +1285,30 @@ class _EmptyStateCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
+    this.actionLabel,
+    this.onActionPressed,
   });
 
   final IconData icon;
   final String title;
   final String message;
+  final String? actionLabel;
+  final VoidCallback? onActionPressed;
 
   @override
   Widget build(BuildContext context) {
     return _ClinicalCard(
       child: Column(
         children: [
-          Icon(icon, size: 42, color: const Color(0xFF4F6477)),
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: AppTheme.soft,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Icon(icon, size: 38, color: AppTheme.primary),
+          ),
           const SizedBox(height: 10),
           Text(
             title,
@@ -1223,7 +1316,7 @@ class _EmptyStateCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppTheme.darkBlue,
+              color: AppTheme.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -1232,10 +1325,17 @@ class _EmptyStateCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 14,
-              color: Color(0xFF5F6E84),
+              color: AppTheme.textMuted,
               height: 1.4,
             ),
           ),
+          if (actionLabel != null && onActionPressed != null) ...[
+            const SizedBox(height: 18),
+            FilledButton(
+              onPressed: onActionPressed,
+              child: Text(actionLabel!),
+            ),
+          ],
         ],
       ),
     );
@@ -1252,18 +1352,12 @@ class _ClinicalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8ECEF)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F2C3E50),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: AppTheme.softShadow,
       ),
       child: child,
     );

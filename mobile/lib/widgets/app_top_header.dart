@@ -24,17 +24,19 @@ class AppTopHeader extends StatelessWidget {
 
   const AppTopHeader.withBack({
     required String title,
+    String? subtitle,
     VoidCallback? onBackPressed,
     Key? key,
   }) : this._(
           title: title,
+          subtitle: subtitle,
           onBackPressed: onBackPressed,
           showBackButton: true,
           key: key,
         );
 
-  static const double _homeBodyHeight = 148;
-  static const double _backBodyHeight = 92;
+  static const double _homeBodyHeight = 168;
+  static const double _backBodyHeight = 138;
 
   final String title;
   final String? subtitle;
@@ -45,82 +47,142 @@ class AppTopHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
     final bodyHeight = showBackButton ? _backBodyHeight : _homeBodyHeight;
-    final topPadding = showBackButton ? topInset + 6 : topInset + 10;
-    final bottomPadding = showBackButton ? 10.0 : 14.0;
+    final topPadding = showBackButton ? topInset + 8 : topInset + 12;
+    final bottomPadding = showBackButton ? 16.0 : 20.0;
 
     return Container(
       width: double.infinity,
       height: topInset + bodyHeight,
-      padding: EdgeInsets.fromLTRB(16, topPadding, 16, bottomPadding),
+      padding: EdgeInsets.fromLTRB(20, topPadding, 20, bottomPadding),
       decoration: const BoxDecoration(
-        color: AppTheme.darkBlue,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(18)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primary,
+            AppTheme.light,
+          ],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
-      child: showBackButton ? _buildBackHeader(context) : _buildHomeHeader(),
+      child: showBackButton
+          ? _BackHeaderContent(
+              title: title,
+              subtitle: subtitle,
+              onBackPressed: onBackPressed ?? () => Navigator.of(context).pop(),
+            )
+          : _HomeHeaderContent(
+              title: title,
+              subtitle: subtitle ?? '',
+            ),
     );
   }
+}
 
-  Widget _buildBackHeader(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: onBackPressed ?? () => Navigator.of(context).pop(),
-          behavior: HitTestBehavior.opaque,
-          child: const SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ),
-        const SizedBox(
-          width: 40,
-          height: 40,
-        ),
-      ],
-    );
-  }
+class _HomeHeaderContent extends StatelessWidget {
+  const _HomeHeaderContent({
+    required this.title,
+    required this.subtitle,
+  });
 
-  Widget _buildHomeHeader() {
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 28),
+        const Spacer(),
         Text(
           title,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 19,
+            fontSize: 24,
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
+            letterSpacing: -0.4,
+            height: 1.05,
           ),
         ),
-        const SizedBox(height: 7),
+        const SizedBox(height: 8),
         Text(
-          subtitle!,
+          subtitle,
           style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 13,
+            color: Color(0xFFE6EFEA),
+            fontSize: 14,
+            height: 1.42,
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _BackHeaderContent extends StatelessWidget {
+  const _BackHeaderContent({
+    required this.title,
+    required this.onBackPressed,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final VoidCallback onBackPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: onBackPressed,
+          behavior: HitTestBehavior.opaque,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'Geri',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const Spacer(),
+        Text(
+          title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+          ),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            subtitle!,
+            style: const TextStyle(
+              color: Color(0xFFE6EFEA),
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+        ],
       ],
     );
   }

@@ -12,32 +12,37 @@ class AppBottomNavigationBar extends StatelessWidget {
 
   static const List<_BottomNavigationItemData> _guestItems = [
     _BottomNavigationItemData(
-      icon: Icons.medical_services_outlined,
-      activeIcon: Icons.medical_services,
+      label: 'Tarama',
       semanticLabel: 'Ses Sağlığı Ön Tarama Testi',
+      icon: Icons.multitrack_audio_outlined,
+      activeIcon: Icons.multitrack_audio_rounded,
     ),
     _BottomNavigationItemData(
+      label: 'Ana Sayfa',
+      semanticLabel: 'Ana sayfa',
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
-      semanticLabel: 'Ana sayfa',
     ),
   ];
 
   static const List<_BottomNavigationItemData> _authenticatedItems = [
     _BottomNavigationItemData(
-      icon: Icons.medical_services_outlined,
-      activeIcon: Icons.medical_services,
+      label: 'Tarama',
       semanticLabel: 'Ses Sağlığı Ön Tarama Testi',
+      icon: Icons.multitrack_audio_outlined,
+      activeIcon: Icons.multitrack_audio_rounded,
     ),
     _BottomNavigationItemData(
+      label: 'Ana Sayfa',
+      semanticLabel: 'Ana sayfa',
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
-      semanticLabel: 'Ana sayfa',
     ),
     _BottomNavigationItemData(
-      icon: Icons.person_outline,
-      activeIcon: Icons.person,
+      label: 'Profil',
       semanticLabel: 'Profil',
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
     ),
   ];
 
@@ -49,19 +54,14 @@ class AppBottomNavigationBar extends StatelessWidget {
     final isAuthenticated = AuthService.instance.currentUser != null;
     final items = isAuthenticated ? _authenticatedItems : _guestItems;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final bottomPadding = bottomInset > 4 ? bottomInset - 2 : 6.0;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(24, 2, 24, bottomPadding),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 18,
-            offset: Offset(0, -4),
-          ),
-        ],
+      padding:
+          EdgeInsets.fromLTRB(14, 12, 14, bottomInset > 4 ? bottomInset : 12),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        border: const Border(top: BorderSide(color: AppTheme.cardBorder)),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Row(
         children: List.generate(
@@ -96,18 +96,37 @@ class _BottomNavigationAction extends StatelessWidget {
       button: true,
       selected: isSelected,
       label: item.semanticLabel,
-      child: InkResponse(
+      child: InkWell(
         onTap: onTap,
-        radius: 24,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Transform.translate(
-            offset: const Offset(0, 2),
-            child: Icon(
-              isSelected ? item.activeIcon : item.icon,
-              size: 27,
-              color: isSelected ? AppTheme.darkBlue : const Color(0xFF7D7D7D),
-            ),
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.soft : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isSelected ? item.activeIcon : item.icon,
+                size: 24,
+                color: isSelected ? AppTheme.primary : AppTheme.textMuted,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppTheme.primary : AppTheme.textMuted,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -117,11 +136,13 @@ class _BottomNavigationAction extends StatelessWidget {
 
 class _BottomNavigationItemData {
   const _BottomNavigationItemData({
+    required this.label,
     required this.icon,
     required this.activeIcon,
     required this.semanticLabel,
   });
 
+  final String label;
   final IconData icon;
   final IconData activeIcon;
   final String semanticLabel;

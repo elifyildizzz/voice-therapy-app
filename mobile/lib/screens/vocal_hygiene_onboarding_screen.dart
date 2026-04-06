@@ -111,7 +111,6 @@ class _VocalHygieneOnboardingScreenState
     final question = _currentQuestion;
     final selected = _selectedAnswers[question.id] ?? <String>{};
     final isLastQuestion = _currentIndex == _questions.length - 1;
-
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light.copyWith(
@@ -120,71 +119,51 @@ class _VocalHygieneOnboardingScreenState
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(title: 'Vokal Hijyenini Kişiselleştir'),
+            const AppTopHeader.withBack(
+              title: 'Vokal Hijyenini Kişiselleştir',
+              subtitle:
+                  'Kısa bir değerlendirme ile sana özel öneriler hazırlayacağız.',
+            ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Kısa bir değerlendirme ile sana özel öneriler hazırlayacağız.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.4,
-                        color: Color(0xFF5F6E84),
+                    Text(
+                      'Soru ${_currentIndex + 1}/${_questions.length}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textMuted,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 8,
+                    const SizedBox(height: 10),
+                    ClipRRect(
                       borderRadius: BorderRadius.circular(999),
-                      backgroundColor: const Color(0xFFE3E8EE),
-                      color: AppTheme.darkBlue,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Soru ${_currentIndex + 1}/${_questions.length}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF5F6E84),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppTheme.cardBorder),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x0D000000),
-                            blurRadius: 12,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        question.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1F2937),
-                        ),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 8,
+                        backgroundColor: AppTheme.sand,
+                        color: AppTheme.primary,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 26),
+                    Text(
+                      question.title,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                        height: 1.16,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
                     Expanded(
                       child: ListView.separated(
                         itemCount: question.options.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final option = question.options[index];
                           final isSelected = selected.contains(option.id);
@@ -198,7 +177,7 @@ class _VocalHygieneOnboardingScreenState
                         },
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         if (_currentIndex > 0)
@@ -216,7 +195,7 @@ class _VocalHygieneOnboardingScreenState
                           ),
                         if (_currentIndex > 0) const SizedBox(width: 10),
                         Expanded(
-                          flex: _currentIndex > 0 ? 1 : 2,
+                          flex: _currentIndex > 0 ? 2 : 1,
                           child: FilledButton(
                             onPressed: _canContinue ? _continue : null,
                             child: _isSubmitting
@@ -224,7 +203,7 @@ class _VocalHygieneOnboardingScreenState
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                                      strokeWidth: 2.2,
                                       color: Colors.white,
                                     ),
                                   )
@@ -264,40 +243,42 @@ class _OptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isSelected ? const Color(0xFFE6F1F5) : Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(22),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            color: isSelected ? AppTheme.soft : AppTheme.card,
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: isSelected ? AppTheme.darkBlue : AppTheme.cardBorder,
+              color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
               width: isSelected ? 1.5 : 1,
             ),
+            boxShadow: isSelected ? null : AppTheme.softShadow,
           ),
           child: Row(
             children: [
               Icon(
                 isMultiSelect
                     ? (isSelected
-                        ? Icons.check_box
-                        : Icons.check_box_outline_blank)
+                        ? Icons.check_circle_rounded
+                        : Icons.radio_button_unchecked_rounded)
                     : (isSelected
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_unchecked),
-                color: isSelected ? AppTheme.darkBlue : const Color(0xFF7D8797),
+                        ? Icons.radio_button_checked_rounded
+                        : Icons.radio_button_unchecked_rounded),
+                color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
+                size: 26,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF1F2937),
+                    color: AppTheme.textPrimary,
                   ),
                 ),
               ),

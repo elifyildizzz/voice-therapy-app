@@ -118,17 +118,14 @@ class _AuthScreenState extends State<AuthScreen> {
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
-        duration: const Duration(milliseconds: 700),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.white,
+        duration: const Duration(milliseconds: 900),
         content: Text(
           message,
           style: const TextStyle(
             color: Color(0xFF1F7A45),
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        margin: const EdgeInsets.only(left: 80, right: 16, bottom: 16),
       ),
     );
   }
@@ -138,17 +135,14 @@ class _AuthScreenState extends State<AuthScreen> {
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
-        duration: const Duration(milliseconds: 1400),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.white,
+        duration: const Duration(milliseconds: 1500),
         content: Text(
           message,
           style: const TextStyle(
             color: Color(0xFFB42318),
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        margin: const EdgeInsets.only(left: 80, right: 16, bottom: 16),
       ),
     );
   }
@@ -188,68 +182,37 @@ class _AuthScreenState extends State<AuthScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
+                constraints: const BoxConstraints(maxWidth: 460),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const _AuthIntro(),
+                    const SizedBox(height: 20),
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.card,
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(color: AppTheme.cardBorder),
+                        boxShadow: AppTheme.softShadow,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'Voice Therapy App',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.darkBlue,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _isLoginMode
-                                ? 'E-posta ve şifrenizle giriş yapın.'
-                                : 'Hesabınızı oluşturarak uygulamayı kişisel geçmişinizle kullanın.',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              height: 1.45,
-                              color: Color(0xFF5F6E84),
-                            ),
-                          ),
-                          const SizedBox(height: 22),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _ModeButton(
-                                  label: 'Giriş Yap',
-                                  isSelected: _isLoginMode,
-                                  onTap: () {
-                                    setState(() {
-                                      _isLoginMode = true;
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _ModeButton(
-                                  label: 'Kayıt Ol',
-                                  isSelected: !_isLoginMode,
-                                  onTap: () {
-                                    setState(() {
-                                      _isLoginMode = false;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
+                          _ModeSwitcher(
+                            isLoginMode: _isLoginMode,
+                            onSelectLogin: () {
+                              setState(() {
+                                _isLoginMode = true;
+                              });
+                            },
+                            onSelectRegister: () {
+                              setState(() {
+                                _isLoginMode = false;
+                              });
+                            },
                           ),
                           const SizedBox(height: 22),
                           AnimatedSwitcher(
@@ -296,6 +259,101 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 }
 
+class _AuthIntro extends StatelessWidget {
+  const _AuthIntro();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 74,
+          height: 74,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primary,
+                AppTheme.light,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: AppTheme.softShadow,
+          ),
+          child: const Icon(
+            Icons.favorite_border_rounded,
+            color: Colors.white,
+            size: 34,
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          'Ses Terapisi',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Sesinize özen gösterin',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            color: AppTheme.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ModeSwitcher extends StatelessWidget {
+  const _ModeSwitcher({
+    required this.isLoginMode,
+    required this.onSelectLogin,
+    required this.onSelectRegister,
+  });
+
+  final bool isLoginMode;
+  final VoidCallback onSelectLogin;
+  final VoidCallback onSelectRegister;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: AppTheme.soft,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _ModeButton(
+              label: 'Giriş Yap',
+              isSelected: isLoginMode,
+              onTap: onSelectLogin,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ModeButton(
+              label: 'Kayıt Ol',
+              isSelected: !isLoginMode,
+              onTap: onSelectRegister,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LoginForm extends StatelessWidget {
   const _LoginForm({
     required this.formKey,
@@ -326,6 +384,7 @@ class _LoginForm extends StatelessWidget {
           _AuthField(
             controller: emailController,
             label: 'E-posta',
+            hintText: 'ornek@email.com',
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             validator: validateEmail,
@@ -334,6 +393,7 @@ class _LoginForm extends StatelessWidget {
           _AuthField(
             controller: passwordController,
             label: 'Şifre',
+            hintText: '........',
             obscureText: true,
             textInputAction: TextInputAction.done,
             validator: validatePassword,
@@ -342,14 +402,6 @@ class _LoginForm extends StatelessWidget {
           const SizedBox(height: 20),
           FilledButton(
             onPressed: isSubmitting ? null : onSubmit,
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.darkBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
             child: Text(isSubmitting ? 'Giriş yapılıyor...' : 'Giriş Yap'),
           ),
         ],
@@ -394,6 +446,7 @@ class _RegisterForm extends StatelessWidget {
           _AuthField(
             controller: firstNameController,
             label: 'Ad',
+            hintText: 'Adınızı girin',
             textInputAction: TextInputAction.next,
             validator: (value) {
               if ((value?.trim() ?? '').isEmpty) {
@@ -406,6 +459,7 @@ class _RegisterForm extends StatelessWidget {
           _AuthField(
             controller: lastNameController,
             label: 'Soyad',
+            hintText: 'Soyadınızı girin',
             textInputAction: TextInputAction.next,
             validator: (value) {
               if ((value?.trim() ?? '').isEmpty) {
@@ -418,6 +472,7 @@ class _RegisterForm extends StatelessWidget {
           _AuthField(
             controller: emailController,
             label: 'E-posta',
+            hintText: 'ornek@email.com',
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             validator: validateEmail,
@@ -426,6 +481,7 @@ class _RegisterForm extends StatelessWidget {
           _AuthField(
             controller: passwordController,
             label: 'Şifre',
+            hintText: '........',
             obscureText: true,
             textInputAction: TextInputAction.next,
             validator: validatePassword,
@@ -434,6 +490,7 @@ class _RegisterForm extends StatelessWidget {
           _AuthField(
             controller: passwordAgainController,
             label: 'Şifre Tekrar',
+            hintText: '........',
             obscureText: true,
             textInputAction: TextInputAction.done,
             validator: (value) {
@@ -451,14 +508,6 @@ class _RegisterForm extends StatelessWidget {
           const SizedBox(height: 20),
           FilledButton(
             onPressed: isSubmitting ? null : onSubmit,
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.darkBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
             child: Text(
               isSubmitting ? 'Kayıt oluşturuluyor...' : 'Kayıt Ol',
             ),
@@ -469,11 +518,12 @@ class _RegisterForm extends StatelessWidget {
   }
 }
 
-class _AuthField extends StatelessWidget {
+class _AuthField extends StatefulWidget {
   const _AuthField({
     required this.controller,
     required this.label,
     required this.validator,
+    this.hintText,
     this.keyboardType,
     this.obscureText = false,
     this.textInputAction,
@@ -483,36 +533,46 @@ class _AuthField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final FormFieldValidator<String> validator;
+  final String? hintText;
   final TextInputType? keyboardType;
   final bool obscureText;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
 
   @override
+  State<_AuthField> createState() => _AuthFieldState();
+}
+
+class _AuthFieldState extends State<_AuthField> {
+  late bool _isObscured = widget.obscureText;
+
+  @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      textInputAction: textInputAction,
-      validator: validator,
-      onFieldSubmitted: onFieldSubmitted,
+      controller: widget.controller,
+      keyboardType: widget.keyboardType,
+      obscureText: _isObscured,
+      textInputAction: widget.textInputAction,
+      validator: widget.validator,
+      onFieldSubmitted: widget.onFieldSubmitted,
       decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: const Color(0xFFF7F8FA),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFC62828)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppTheme.darkBlue),
-        ),
+        labelText: widget.label,
+        hintText: widget.hintText,
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                onPressed: () {
+                  setState(() {
+                    _isObscured = !_isObscured;
+                  });
+                },
+                icon: Icon(
+                  _isObscured
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: AppTheme.textMuted,
+                ),
+              )
+            : null,
       ),
     );
   }
@@ -532,10 +592,10 @@ class _ModeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isSelected ? AppTheme.darkBlue : const Color(0xFFF2F4F7),
-      borderRadius: BorderRadius.circular(14),
+      color: isSelected ? AppTheme.primary : Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(999),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -543,7 +603,7 @@ class _ModeButton extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? Colors.white : const Color(0xFF4B5B6C),
+              color: isSelected ? Colors.white : AppTheme.primary,
               fontSize: 15,
               fontWeight: FontWeight.w700,
             ),

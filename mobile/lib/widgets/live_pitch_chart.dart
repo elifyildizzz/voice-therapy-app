@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/pitch_reading.dart';
+import '../theme/app_theme.dart';
 
 class LivePitchChart extends StatelessWidget {
   const LivePitchChart({
@@ -30,18 +31,12 @@ class LivePitchChart extends StatelessWidget {
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFFF7FAFD),
-                        Color(0xFFEEF3F8),
-                      ],
-                    ),
+                    color: const Color(0xFFFCFBF8),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.cardBorder),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                     child: CustomPaint(
                       painter: _LivePitchChartPainter(
                         points: points,
@@ -55,17 +50,17 @@ class LivePitchChart extends StatelessWidget {
                 ),
               ),
               Positioned(
-                left: 12,
+                left: 8,
                 top: 12,
                 child: _AxisLabel('${maxHz.toInt()} Hz'),
               ),
               Positioned(
-                left: 12,
+                left: 8,
                 top: 102,
                 child: _AxisLabel('${((minHz + maxHz) / 2).round()} Hz'),
               ),
               Positioned(
-                left: 12,
+                left: 8,
                 bottom: 12,
                 child: _AxisLabel('${minHz.toInt()} Hz'),
               ),
@@ -78,18 +73,18 @@ class LivePitchChart extends StatelessWidget {
             Text(
               '${window.inSeconds} sn önce',
               style: const TextStyle(
-                color: Color(0xFF6E7C8F),
+                color: AppTheme.textMuted,
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const Spacer(),
             const Text(
               'Şimdi',
               style: TextStyle(
-                color: Color(0xFF6E7C8F),
+                color: AppTheme.textMuted,
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -107,17 +102,13 @@ class _AxisLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(999),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       child: Text(
         text,
         style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF546579),
+          color: AppTheme.textMuted,
         ),
       ),
     );
@@ -202,20 +193,20 @@ class _LivePitchChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFF67C0A2).withValues(alpha: 0.16)
+      ..color = AppTheme.light.withValues(alpha: 0.16)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
     final linePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFF2E9B76);
+      ..color = AppTheme.primary;
 
     canvas.drawPath(path, glowPaint);
     canvas.drawPath(path, linePaint);
 
     if (latestReliableOffset != null) {
-      final pointFill = Paint()..color = const Color(0xFF2E9B76);
+      final pointFill = Paint()..color = AppTheme.primary;
       final pointStroke = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3
@@ -230,7 +221,7 @@ class _LivePitchChartPainter extends CustomPainter {
     final gridPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
-      ..color = const Color(0xFFD7E2EB);
+      ..color = AppTheme.cardBorder;
 
     const horizontalLines = 4;
     const verticalLines = 6;
@@ -259,7 +250,7 @@ class _LivePitchChartPainter extends CustomPainter {
       text: const TextSpan(
         text: 'Ses bekleniyor',
         style: TextStyle(
-          color: Color(0xFF8C99A9),
+          color: AppTheme.textMuted,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),

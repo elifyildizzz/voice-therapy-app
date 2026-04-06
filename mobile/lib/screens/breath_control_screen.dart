@@ -11,28 +11,28 @@ class BreathControlScreen extends StatelessWidget {
 
   static const List<WarmupExercise> _exercises = [
     WarmupExercise(
-      titleTr: 'Egzersiz 1',
-      titleEn: 'Exercise 1',
+      titleTr: 'Diyafram nefes egzersizi',
+      titleEn: 'Egzersiz 1',
       durationMinutes: 3,
       level: 'Kolay',
-      levelColor: Color(0xFFBEE9CB),
-      levelTextColor: Color(0xFF2D6B3F),
+      levelColor: AppTheme.soft,
+      levelTextColor: AppTheme.primary,
     ),
     WarmupExercise(
-      titleTr: 'Egzersiz 2',
-      titleEn: 'Exercise 2',
+      titleTr: 'Ritimli nefes kontrolü',
+      titleEn: 'Egzersiz 2',
       durationMinutes: 4,
       level: 'Orta',
-      levelColor: Color(0xFFF2DEB8),
-      levelTextColor: Color(0xFF92672A),
+      levelColor: AppTheme.sand,
+      levelTextColor: AppTheme.terracotta,
     ),
     WarmupExercise(
-      titleTr: 'Egzersiz 3',
-      titleEn: 'Exercise 3',
+      titleTr: 'Yavaş nefes boşaltma',
+      titleEn: 'Egzersiz 3',
       durationMinutes: 5,
       level: 'Kolay',
-      levelColor: Color(0xFFBEE9CB),
-      levelTextColor: Color(0xFF2D6B3F),
+      levelColor: AppTheme.soft,
+      levelTextColor: AppTheme.primary,
     ),
   ];
 
@@ -46,10 +46,13 @@ class BreathControlScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(title: 'Nefes Kontrolü'),
+            const AppTopHeader.withBack(
+              title: 'Nefes Kontrolü',
+              subtitle: 'Diyafram odaklı nefes akışını adım adım takip edin.',
+            ),
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 itemCount: _exercises.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 14),
                 itemBuilder: (context, index) {
@@ -87,36 +90,34 @@ class _ExerciseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(12),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
+            color: AppTheme.card,
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.cardBorder),
-            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppTheme.softShadow,
           ),
           child: Row(
             children: [
-              GestureDetector(
-                onTap: onTap,
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkBlue,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
-                    color: Colors.white,
-                    size: 30,
-                  ),
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  color: AppTheme.primarySoft,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.play_arrow_rounded,
+                  color: AppTheme.primary,
+                  size: 36,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,50 +125,51 @@ class _ExerciseCard extends StatelessWidget {
                     Text(
                       exercise.titleTr,
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E1E1E),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       exercise.titleEn,
                       style: const TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF888888),
+                        color: AppTheme.textMuted,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         const Icon(
-                          Icons.access_time,
+                          Icons.schedule_rounded,
                           size: 16,
-                          color: Color(0xFF8E8E93),
+                          color: AppTheme.textMuted,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           '${exercise.durationMinutes} dk',
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF8E8E93),
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textMuted,
                           ),
                         ),
                         const SizedBox(width: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
-                            vertical: 4,
+                            vertical: 5,
                           ),
                           decoration: BoxDecoration(
                             color: exercise.levelColor,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
                             exercise.level,
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w700,
                               color: exercise.levelTextColor,
                             ),
                           ),
@@ -177,11 +179,10 @@ class _ExerciseCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
               const Icon(
-                Icons.chevron_right,
-                color: Color(0xFF8E8E93),
-                size: 24,
+                Icons.arrow_forward_ios_rounded,
+                color: AppTheme.textMuted,
+                size: 18,
               ),
             ],
           ),

@@ -7,8 +7,8 @@ import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
 import 'auth_screen.dart';
 import 'breath_control_screen.dart';
-import 'vocal_hygiene_onboarding_screen.dart';
 import 'vocal_function_exercises_screen.dart';
+import 'vocal_hygiene_onboarding_screen.dart';
 import 'voice_assessment_tests_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -24,8 +24,9 @@ class HomeScreen extends StatelessWidget {
       builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
           ),
+          backgroundColor: AppTheme.card,
           title: Text(title),
           content: Text(message),
           actions: [
@@ -74,7 +75,7 @@ class HomeScreen extends StatelessWidget {
         context,
         title: 'Kişiselleştirme için giriş gerekli',
         message:
-            'Vokal hijyen cevaplarının hesabına kaydedilmesi ve sana özel sıralama için önce giriş yapın veya kayıt olun.',
+            'Vokal hijyen cevaplarının hesabına kaydedilmesi ve size özel sıralama için önce giriş yapın veya kayıt olun.',
       );
       return;
     }
@@ -91,7 +92,7 @@ class HomeScreen extends StatelessWidget {
     final currentUser = AuthService.instance.currentUser;
     final headerTitle = currentUser == null
         ? 'Hoş geldiniz'
-        : 'Hoş geldiniz, ${currentUser.firstName}';
+        : 'Hoş geldiniz,\n${currentUser.firstName}';
 
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -103,53 +104,76 @@ class HomeScreen extends StatelessWidget {
           children: [
             AppTopHeader.home(
               title: headerTitle,
-              subtitle: 'Terapistinizin önerdiği egzersiz kategorisini seçin.',
+              subtitle:
+                  'Terapistinizin önerdiği egzersiz kategorisini seçin ve günlük akışınızı sürdürün.',
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
                 children: [
-                  _CategoryTile(
-                    icon: Icons.water_drop_outlined,
-                    title: 'Vokal Hijyen',
-                    onTap: () {
-                      _openVocalHygiene(context, currentUser);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _CategoryTile(
-                    icon: Icons.air,
-                    title: 'Nefes Kontrolü',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const BreathControlScreen(),
-                        ),
+                  const _DailyFocusCard(),
+                  const SizedBox(height: 18),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final tileWidth = (constraints.maxWidth - 14) / 2;
+
+                      return Wrap(
+                        spacing: 14,
+                        runSpacing: 14,
+                        children: [
+                          _CategoryTile(
+                            width: tileWidth,
+                            icon: Icons.spa_outlined,
+                            title: 'Vokal Hijyen',
+                            backgroundColor: AppTheme.soft,
+                            iconColor: AppTheme.primary,
+                            onTap: () =>
+                                _openVocalHygiene(context, currentUser),
+                          ),
+                          _CategoryTile(
+                            width: tileWidth,
+                            icon: Icons.air_rounded,
+                            title: 'Nefes\nKontrolü',
+                            backgroundColor: const Color(0xFFF7EEE8),
+                            iconColor: AppTheme.terracotta,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const BreathControlScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _CategoryTile(
+                            width: tileWidth,
+                            icon: Icons.music_note_rounded,
+                            title: 'Vokal\nFonksiyon',
+                            backgroundColor: const Color(0xFFF9F2DF),
+                            iconColor: const Color(0xFFB98A2E),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      const VocalFunctionExercisesScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _CategoryTile(
+                            width: tileWidth,
+                            icon: Icons.bar_chart_rounded,
+                            title: 'Ses\nDeğerlendirme',
+                            backgroundColor: const Color(0xFFF3ECE6),
+                            iconColor: AppTheme.light,
+                            onTap: () =>
+                                _openAssessmentTests(context, currentUser),
+                          ),
+                        ],
                       );
                     },
                   ),
-                  const SizedBox(height: 12),
-                  _CategoryTile(
-                    icon: Icons.record_voice_over,
-                    title: 'Vokal Fonksiyon Egzersizleri',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const VocalFunctionExercisesScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _CategoryTile(
-                    icon: Icons.assignment_outlined,
-                    title: 'Ses Değerlendirme Testleri',
-                    isHighlighted: true,
-                    showChevron: true,
-                    onTap: () {
-                      _openAssessmentTests(context, currentUser);
-                    },
-                  ),
+                  const SizedBox(height: 18),
+                  const _SupportCard(),
                 ],
               ),
             ),
@@ -160,61 +184,168 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+class _DailyFocusCard extends StatelessWidget {
+  const _DailyFocusCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Günlük Akış',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '4 Kategori',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primary,
+                    height: 1,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'Hijyen, nefes, fonksiyon ve değerlendirme akışı tek ekranda hazır.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textMuted,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppTheme.soft,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.favorite_border_rounded,
+              color: AppTheme.primary,
+              size: 30,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
+    required this.width,
     required this.icon,
     required this.title,
-    this.isHighlighted = false,
+    required this.backgroundColor,
+    required this.iconColor,
     this.onTap,
-    this.showChevron = true,
   });
 
+  final double width;
   final IconData icon;
   final String title;
+  final Color backgroundColor;
+  final Color iconColor;
   final VoidCallback? onTap;
-  final bool isHighlighted;
-  final bool showChevron;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isHighlighted ? const Color(0xFFC6E0E6) : Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        borderRadius: BorderRadius.circular(26),
+        child: Ink(
+          width: width,
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
           decoration: BoxDecoration(
-            border: Border.all(color: AppTheme.cardBorder),
-            borderRadius: BorderRadius.circular(16),
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(26),
+            border:
+                Border.all(color: AppTheme.cardBorder.withValues(alpha: 0.7)),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
-                  color: AppTheme.iconBg,
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(icon, color: AppTheme.darkBlue),
+                child: Icon(icon, color: iconColor, size: 26),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+              const SizedBox(height: 38),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                  height: 1.15,
                 ),
               ),
-              if (showChevron)
-                const Icon(Icons.chevron_right, color: AppTheme.darkBlue),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SupportCard extends StatelessWidget {
+  const _SupportCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.lightbulb_outline_rounded,
+            color: AppTheme.terracotta,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Gün içinde dilediğiniz modülden devam ederek kişisel ses rutininizi sürdürebilirsiniz.',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textMuted,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

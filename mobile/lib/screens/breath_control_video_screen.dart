@@ -15,6 +15,13 @@ class BreathControlVideoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final steps = <String>[
+      'Rahat bir şekilde oturun veya ayakta durun.',
+      'Bir elinizi göğsünüze, diğerini karnınıza koyun.',
+      'Burnunuzdan derin nefes alın, karnınız şişsin.',
+      'Ağzınızdan yavaşça nefes verin.',
+    ];
+
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light.copyWith(
@@ -23,16 +30,18 @@ class BreathControlVideoScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            AppTopHeader.withBack(title: exercise.titleTr),
+            AppTopHeader.withBack(
+              title: 'Nefes Kontrolü',
+              subtitle: exercise.titleTr,
+            ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _BreathVideoCard(exercise: exercise),
-                    const SizedBox(height: 16),
-                    const _BreathInstructionCard(),
+                    _BreathTimerRing(durationMinutes: exercise.durationMinutes),
+                    const SizedBox(height: 22),
+                    _BreathStepsCard(steps: steps),
                   ],
                 ),
               ),
@@ -44,125 +53,125 @@ class BreathControlVideoScreen extends StatelessWidget {
   }
 }
 
-class _BreathVideoCard extends StatelessWidget {
-  const _BreathVideoCard({
-    required this.exercise,
+class _BreathTimerRing extends StatelessWidget {
+  const _BreathTimerRing({
+    required this.durationMinutes,
   });
 
-  final WarmupExercise exercise;
+  final int durationMinutes;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.cardBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 220,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF4B5A66),
-                  Color(0xFF90A7B2),
-                ],
-              ),
-            ),
-            child: Stack(
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Container(
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: AppTheme.card,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: AppTheme.cardBorder),
+          boxShadow: AppTheme.softShadow,
+        ),
+        child: CustomPaint(
+          painter: _BreathRingPainter(),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.08),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
+                Text(
+                  '$durationMinutes',
+                  style: const TextStyle(
+                    fontSize: 54,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primary,
+                    height: 1,
                   ),
                 ),
-                const Center(
-                  child: Icon(
-                    Icons.play_circle_fill_rounded,
-                    size: 88,
-                    color: Colors.white,
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.22),
-                          ),
-                        ),
-                        child: const Text(
-                          'Nefes Egzersizi',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${exercise.durationMinutes} dk',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 6),
+                const Text(
+                  'dakika',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textMuted,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          Text(
-            exercise.titleEn,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF556273),
+        ),
+      ),
+    );
+  }
+}
+
+class _BreathStepsCard extends StatelessWidget {
+  const _BreathStepsCard({
+    required this.steps,
+  });
+
+  final List<String> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Adımlar:',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
             ),
           ),
-          const SizedBox(height: 10),
-          const Text(
-            'Bu alan nefes kontrolü videoları için ayrıdır. Diyafram kullanımı, nefes alma-verme ritmi ve beden duruşu burada gösterilecek gerçek video ile takip edilebilir.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.45,
-              color: Color(0xFF354254),
+          const SizedBox(height: 16),
+          ...List.generate(
+            steps.length,
+            (index) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppTheme.soft,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      steps[index],
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: AppTheme.textMuted,
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -171,54 +180,41 @@ class _BreathVideoCard extends StatelessWidget {
   }
 }
 
-class _BreathInstructionCard extends StatelessWidget {
-  const _BreathInstructionCard();
-
+class _BreathRingPainter extends CustomPainter {
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5FAFB),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFD8E7EA)),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Nefes Kontrolü',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.darkBlue,
-            ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            'Videodaki nefes alma ve verme temposunu izleyin.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF344254)),
-          ),
-          SizedBox(height: 6),
-          Text(
-            'Omuzları kaldırmadan, kontrollü ve ritmik şekilde egzersizi tekrar edin.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.45,
-              color: Color(0xFF344254),
-            ),
-          ),
-          SizedBox(height: 6),
-          Text(
-            'Bu ekran vokal pitch takibinden ayrıdır; nefes egzersizlerine özel içerik için kullanılacaktır.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.45,
-              color: Color(0xFF344254),
-            ),
-          ),
+  void paint(Canvas canvas, Size size) {
+    const strokeWidth = 16.0;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+
+    final backgroundPaint = Paint()
+      ..color = AppTheme.soft
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final foregroundPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          AppTheme.light,
+          AppTheme.primary,
         ],
-      ),
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawCircle(center, radius, backgroundPaint);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -1.57,
+      6.0,
+      false,
+      foregroundPaint,
     );
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -9,8 +9,11 @@ class WarmupExercise {
     required this.levelColor,
     required this.levelTextColor,
     this.videoAssetPath,
+    this.videoCropTopFraction = 0,
+    this.videoCropHeightFraction = 1,
     this.thumbnailAssetPath,
     this.durationLabel,
+    this.howToText,
   });
 
   final String titleTr;
@@ -20,6 +23,9 @@ class WarmupExercise {
   final Color levelColor;
   final Color levelTextColor;
   final String? videoAssetPath;
+  final double videoCropTopFraction;
+  final double videoCropHeightFraction;
   final String? thumbnailAssetPath;
   final String? durationLabel;
+  final String? howToText;
 }

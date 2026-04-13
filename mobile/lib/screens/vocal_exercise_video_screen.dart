@@ -246,27 +246,39 @@ class _VocalExerciseVideoScreenState extends State<VocalExerciseVideoScreen> {
             _PlainVideoHeader(title: widget.exercise.titleEn),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                padding: const EdgeInsets.fromLTRB(8, 12, 8, 28),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _TherapistVideoCard(
-                      exercise: widget.exercise,
+                    _TherapistVideoPlayer(
                       controller: _videoController,
                       isVideoReady: _isVideoReady,
                       isVideoLoading: _isVideoLoading,
+                      cropTopFraction: widget.exercise.videoCropTopFraction,
+                      cropHeightFraction:
+                          widget.exercise.videoCropHeightFraction,
                       onTogglePlayback: _toggleVideoPlayback,
                     ),
-                    const SizedBox(height: 16),
-                    const _InstructionCard(),
-                    const SizedBox(height: 16),
-                    _LivePitchCard(
-                      currentHz: _currentHz,
-                      isListening: _isListening,
-                      isBusy: _isBusy,
-                      trackingStatus: _trackingStatus,
-                      points: _points,
-                      onToggle: _toggleListening,
+                    if (widget.exercise.howToText != null) ...[
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: _HowToSection(
+                          text: widget.exercise.howToText!,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: _LivePitchSection(
+                        currentHz: _currentHz,
+                        isListening: _isListening,
+                        isBusy: _isBusy,
+                        trackingStatus: _trackingStatus,
+                        points: _points,
+                        onToggle: _toggleListening,
+                      ),
                     ),
                   ],
                 ),
@@ -325,24 +337,25 @@ class _PlainVideoHeader extends StatelessWidget {
   }
 }
 
-class _TherapistVideoCard extends StatelessWidget {
-  const _TherapistVideoCard({
-    required this.exercise,
+class _TherapistVideoPlayer extends StatelessWidget {
+  const _TherapistVideoPlayer({
     required this.controller,
     required this.isVideoReady,
     required this.isVideoLoading,
+    required this.cropTopFraction,
+    required this.cropHeightFraction,
     required this.onTogglePlayback,
   });
 
-  final WarmupExercise exercise;
   final VideoPlayerController? controller;
   final bool isVideoReady;
   final bool isVideoLoading;
+  final double cropTopFraction;
+  final double cropHeightFraction;
   final Future<void> Function() onTogglePlayback;
 
   @override
   Widget build(BuildContext context) {
-    final hasVideoAsset = exercise.videoAssetPath != null;
     final isPlaying = controller?.value.isPlaying ?? false;
     final canTogglePlayback = isVideoReady && controller != null;
     final videoValue = controller?.value;
@@ -352,158 +365,142 @@ class _TherapistVideoCard extends StatelessWidget {
     final videoPosition = videoValue != null && videoValue.isInitialized
         ? videoValue.position
         : Duration.zero;
+    final aspectRatio = videoValue != null &&
+            videoValue.isInitialized &&
+            videoValue.aspectRatio > 0
+        ? videoValue.aspectRatio / cropHeightFraction.clamp(0.1, 1.0).toDouble()
+        : 16 / 9;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppTheme.cardBorder),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(22),
-              onTap: canTogglePlayback
-                  ? () => unawaited(onTogglePlayback())
-                  : null,
-              child: Container(
-                height: 220,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: canTogglePlayback ? () => unawaited(onTogglePlayback()) : null,
+        child: AspectRatio(
+          aspectRatio: aspectRatio,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              DecoratedBox(
                 decoration: BoxDecoration(
                   color: AppTheme.soft,
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(22),
-                        child: isVideoReady && controller != null
-                            ? Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  FittedBox(
-                                    fit: BoxFit.cover,
-                                    child: SizedBox(
-                                      width: controller!.value.size.width,
-                                      height: controller!.value.size.height,
-                                      child: VideoPlayer(controller!),
-                                    ),
-                                  ),
-                                  DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.08),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : const _VideoPlaceholder(),
+                child: isVideoReady && controller != null
+                    ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _CroppedVideoPlayer(
+                            controller: controller!,
+                            cropTopFraction: cropTopFraction,
+                            cropHeightFraction: cropHeightFraction,
+                          ),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.04),
+                            ),
+                          ),
+                        ],
+                      )
+                    : const _VideoPlaceholder(),
+              ),
+              Center(
+                child: isVideoLoading
+                    ? const SizedBox(
+                        width: 34,
+                        height: 34,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : AnimatedOpacity(
+                        duration: const Duration(milliseconds: 180),
+                        opacity: isPlaying ? 0 : 1,
+                        child: Container(
+                          width: 76,
+                          height: 76,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.82),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
+                            size: 46,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+              ),
+              if (canTogglePlayback && controller != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.62),
+                        ],
                       ),
                     ),
-                    Center(
-                      child: isVideoLoading
-                          ? const SizedBox(
-                              width: 34,
-                              height: 34,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 32, 14, 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: VideoProgressIndicator(
+                              controller!,
+                              allowScrubbing: true,
+                              padding: EdgeInsets.zero,
+                              colors: VideoProgressColors(
+                                playedColor:
+                                    Colors.white.withValues(alpha: 0.9),
+                                bufferedColor:
+                                    Colors.white.withValues(alpha: 0.45),
+                                backgroundColor:
+                                    Colors.white.withValues(alpha: 0.28),
                               ),
-                            )
-                          : AnimatedOpacity(
-                              duration: const Duration(milliseconds: 180),
-                              opacity: isPlaying ? 0 : 1,
-                              child: Container(
-                                width: 84,
-                                height: 84,
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      AppTheme.headerStart,
-                                      AppTheme.headerEnd,
-                                    ],
-                                  ),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.play_arrow_rounded,
-                                  size: 46,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text(
+                                _formatVideoDuration(videoPosition),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
                               ),
-                            ),
+                              const Spacer(),
+                              Text(
+                                _formatVideoDuration(
+                                  videoDuration ?? Duration.zero,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            exercise.titleEn,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            hasVideoAsset
-                ? 'Video bir kez oynar ve sonda durur. Tekrar oynatmak için oynat düğmesine basabilirsiniz.'
-                : 'Bu bölüm video akışını göstermek için hazır durumda tutulur.',
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textMuted,
-              height: 1.45,
-            ),
-          ),
-          if (canTogglePlayback && controller != null) ...[
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: VideoProgressIndicator(
-                controller!,
-                allowScrubbing: true,
-                padding: EdgeInsets.zero,
-                colors: const VideoProgressColors(
-                  playedColor: AppTheme.headerEnd,
-                  bufferedColor: AppTheme.headerStart,
-                  backgroundColor: AppTheme.soft,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  _formatVideoDuration(videoPosition),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textMuted,
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  _formatVideoDuration(videoDuration ?? Duration.zero),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -513,6 +510,66 @@ class _TherapistVideoCard extends StatelessWidget {
     final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
     final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+}
+
+class _CroppedVideoPlayer extends StatelessWidget {
+  const _CroppedVideoPlayer({
+    required this.controller,
+    required this.cropTopFraction,
+    required this.cropHeightFraction,
+  });
+
+  final VideoPlayerController controller;
+  final double cropTopFraction;
+  final double cropHeightFraction;
+
+  @override
+  Widget build(BuildContext context) {
+    final videoSize = controller.value.size;
+    final rawAspectRatio = controller.value.aspectRatio;
+    final cropHeight = cropHeightFraction.clamp(0.1, 1.0).toDouble();
+    final cropTop = cropTopFraction.clamp(0.0, 1 - cropHeight).toDouble();
+
+    if (videoSize.isEmpty || rawAspectRatio <= 0) {
+      return VideoPlayer(controller);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        if (width <= 0) {
+          return VideoPlayer(controller);
+        }
+
+        final rawHeight = width / rawAspectRatio;
+
+        return ClipRect(
+          child: OverflowBox(
+            alignment: Alignment.topCenter,
+            minWidth: width,
+            maxWidth: width,
+            minHeight: rawHeight,
+            maxHeight: rawHeight,
+            child: Transform.translate(
+              offset: Offset(0, -rawHeight * cropTop),
+              child: SizedBox(
+                width: width,
+                height: rawHeight,
+                child: FittedBox(
+                  fit: BoxFit.fill,
+                  child: SizedBox(
+                    width: videoSize.width,
+                    height: videoSize.height,
+                    child: VideoPlayer(controller),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -537,64 +594,42 @@ class _VideoPlaceholder extends StatelessWidget {
   }
 }
 
-class _InstructionCard extends StatelessWidget {
-  const _InstructionCard();
+class _HowToSection extends StatelessWidget {
+  const _HowToSection({
+    required this.text,
+  });
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: AppTheme.cardBorder),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Kullanım Akışı',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Nasıl Yapmalısın?',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary,
           ),
-          SizedBox(height: 12),
-          Text(
-            'Videodaki trill hareketini ve ses yüksekliğini takip edin.',
-            style: TextStyle(
-              fontSize: 15,
-              color: AppTheme.textMuted,
-              height: 1.45,
-            ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 16,
+            color: AppTheme.textMuted,
+            height: 1.55,
           ),
-          SizedBox(height: 10),
-          Text(
-            'Başlat düğmesine bastığınızda mikrofon açılır ve sesinizin pitch değeri anlık olarak çizilir.',
-            style: TextStyle(
-              fontSize: 15,
-              color: AppTheme.textMuted,
-              height: 1.45,
-            ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            'Sessizlikte veya güvenilir olmayan anlarda çizgi kopar, böylece grafik yanıltıcı olmaz.',
-            style: TextStyle(
-              fontSize: 15,
-              color: AppTheme.textMuted,
-              height: 1.45,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _LivePitchCard extends StatelessWidget {
-  const _LivePitchCard({
+class _LivePitchSection extends StatelessWidget {
+  const _LivePitchSection({
     required this.currentHz,
     required this.isListening,
     required this.isBusy,
@@ -612,94 +647,68 @@ class _LivePitchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppTheme.cardBorder),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Canlı Pitch Grafiği',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ),
-              _StatusPill(
-                label: trackingStatus,
-                isActive: isListening,
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                currentHz == null ? '--' : currentHz!.toStringAsFixed(1),
-                style: const TextStyle(
-                  fontSize: 30,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Canlı Pitch Grafiği',
+                style: TextStyle(
+                  fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
-                  height: 1,
+                  color: AppTheme.textPrimary,
                 ),
               ),
-              const SizedBox(width: 8),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 6),
-                child: Text(
-                  'Hz',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textMuted,
+            ),
+            _StatusPill(
+              label: trackingStatus,
+              isActive: isListening,
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        LivePitchChart(points: points),
+        const SizedBox(height: 14),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              currentHz == null
+                  ? '-- Hz'
+                  : '${currentHz!.toStringAsFixed(1)} Hz',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: isBusy ? null : onToggle,
+                style: FilledButton.styleFrom(
+                  backgroundColor:
+                      isListening ? AppTheme.terracotta : AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 13,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Grafik son birkaç saniyeyi daha hassas gösterecek şekilde ayarlanmıştır; küçük pitch değişimleri de daha belirgin görünür.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.45,
-              color: AppTheme.textMuted,
-            ),
-          ),
-          const SizedBox(height: 16),
-          LivePitchChart(points: points),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: isBusy ? null : onToggle,
-              style: FilledButton.styleFrom(
-                backgroundColor:
-                    isListening ? AppTheme.terracotta : AppTheme.primary,
-              ),
-              icon: Icon(
-                isListening
-                    ? Icons.stop_circle_outlined
-                    : Icons.mic_none_rounded,
-              ),
-              label: Text(
-                isListening ? 'Dinlemeyi Durdur' : 'Canlı Analizi Başlat',
+                icon: Icon(
+                  isListening
+                      ? Icons.stop_circle_outlined
+                      : Icons.mic_none_rounded,
+                ),
+                label: Text(
+                  isListening ? 'Durdur' : 'Başlat',
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 }

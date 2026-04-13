@@ -26,6 +26,8 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
       levelColor: AppTheme.soft,
       levelTextColor: AppTheme.primary,
       videoAssetPath: 'assets/videos/vocal_function/gevseme.mp4',
+      videoCropTopFraction: 288 / 848,
+      videoCropHeightFraction: 272 / 848,
     ),
     WarmupExercise(
       titleTr: 'Egzersiz 3',
@@ -43,6 +45,8 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
       levelColor: AppTheme.sand,
       levelTextColor: AppTheme.terracotta,
       videoAssetPath: 'assets/videos/vocal_function/uzatilmis_fonasyon.mp4',
+      videoCropTopFraction: 266 / 832,
+      videoCropHeightFraction: 304 / 832,
     ),
     WarmupExercise(
       titleTr: 'Egzersiz 5',
@@ -52,6 +56,10 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
       levelColor: AppTheme.soft,
       levelTextColor: AppTheme.primary,
       videoAssetPath: 'assets/videos/vocal_function/pes_perdede_fonasyon.mp4',
+      videoCropTopFraction: 272 / 848,
+      videoCropHeightFraction: 304 / 848,
+      howToText:
+          'Çıkarabildiğiniz en kalın (pes) ve pürüzsüz sesle videodaki ritmi takip edin. Sesinizi zorlamadan, göğsünüzdeki titreşimi hissederek egzersizi tamamlayın.',
     ),
   ];
 

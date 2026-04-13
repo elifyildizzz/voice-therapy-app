@@ -12,7 +12,7 @@ class AppBottomNavigationBar extends StatelessWidget {
 
   static const List<_BottomNavigationItemData> _guestItems = [
     _BottomNavigationItemData(
-      label: 'Tarama',
+      label: 'Ön Tarama',
       semanticLabel: 'Ses Sağlığı Ön Tarama Testi',
       icon: Icons.multitrack_audio_outlined,
       activeIcon: Icons.multitrack_audio_rounded,
@@ -27,7 +27,7 @@ class AppBottomNavigationBar extends StatelessWidget {
 
   static const List<_BottomNavigationItemData> _authenticatedItems = [
     _BottomNavigationItemData(
-      label: 'Tarama',
+      label: 'Ön Tarama',
       semanticLabel: 'Ses Sağlığı Ön Tarama Testi',
       icon: Icons.multitrack_audio_outlined,
       activeIcon: Icons.multitrack_audio_rounded,
@@ -118,10 +118,11 @@ class _BottomNavigationAction extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 item.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+                overflow: TextOverflow.fade,
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? AppTheme.primary : AppTheme.textMuted,
                 ),

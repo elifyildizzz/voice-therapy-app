@@ -292,7 +292,7 @@ class _AuthIntro extends StatelessWidget {
           'Ses Terapisi',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 36,
+            fontSize: 30,
             fontWeight: FontWeight.w800,
             color: AppTheme.textPrimary,
             letterSpacing: -0.5,

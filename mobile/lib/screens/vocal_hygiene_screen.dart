@@ -5,6 +5,7 @@ import '../models/vocal_hygiene_personalization.dart';
 import '../services/vocal_hygiene_repository.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
+import 'vocal_hygiene_onboarding_screen.dart';
 
 class VocalHygieneScreen extends StatefulWidget {
   const VocalHygieneScreen({
@@ -215,15 +216,42 @@ class _VocalHygieneScreenState extends State<VocalHygieneScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(0, 16, 0, 24),
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Öneriler cevaplarına göre sıralandı. Öncelikli kartları önce inceleyebilirsin.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.4,
-                        color: Color(0xFF5F6E84),
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Öneriler cevaplarına göre sıralandı. Öncelikli kartları önce inceleyebilirsin.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.4,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const VocalHygieneOnboardingScreen(),
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            foregroundColor: AppTheme.homeAccent,
+                            side: const BorderSide(color: AppTheme.cardBorder),
+                          ),
+                          child: const Text('Testi Tekrar Çöz'),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -296,7 +324,7 @@ class _InfoCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isImportant ? const Color(0xFF8BB6C2) : AppTheme.cardBorder,
+          color: isImportant ? const Color(0xFFC5D5BE) : AppTheme.cardBorder,
           width: isImportant ? 1.6 : 1,
         ),
         boxShadow: const [
@@ -315,7 +343,7 @@ class _InfoCard extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F3F6),
+                color: AppTheme.soft,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Text(
@@ -323,7 +351,7 @@ class _InfoCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.darkBlue,
+                  color: AppTheme.homeAccent,
                 ),
               ),
             ),
@@ -337,7 +365,7 @@ class _InfoCard extends StatelessWidget {
                   color: AppTheme.iconBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(item.icon, color: AppTheme.darkBlue),
+                child: Icon(item.icon, color: AppTheme.homeAccent),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -349,7 +377,7 @@ class _InfoCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1E1E1E),
+                        color: AppTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -358,7 +386,7 @@ class _InfoCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 14,
                         height: 1.35,
-                        color: Color(0xFF4F4F4F),
+                        color: AppTheme.textMuted,
                       ),
                     ),
                   ],
@@ -394,7 +422,7 @@ class _PaginationDots extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             color: currentIndex == index
-                ? AppTheme.darkBlue
+                ? AppTheme.homeAccent
                 : const Color(0xFFCAD0DA),
             borderRadius: BorderRadius.circular(10),
           ),
@@ -448,7 +476,7 @@ class _CategoryCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isImportant ? const Color(0xFF8BB6C2) : AppTheme.cardBorder,
+          color: isImportant ? const Color(0xFFC5D5BE) : AppTheme.cardBorder,
           width: isImportant ? 1.4 : 1,
         ),
         boxShadow: const [
@@ -467,7 +495,7 @@ class _CategoryCard extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F3F6),
+                color: AppTheme.soft,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Text(
@@ -475,7 +503,7 @@ class _CategoryCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.darkBlue,
+                  color: AppTheme.homeAccent,
                 ),
               ),
             ),
@@ -484,7 +512,7 @@ class _CategoryCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1E1E1E),
+              color: AppTheme.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -496,7 +524,7 @@ class _CategoryCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   height: 1.35,
-                  color: Color(0xFF4F4F4F),
+                  color: AppTheme.textMuted,
                 ),
               ),
             ),

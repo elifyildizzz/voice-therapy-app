@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 
@@ -8,17 +9,29 @@ class AppTopHeader extends StatelessWidget {
     required this.showBackButton,
     this.subtitle,
     this.onBackPressed,
+    this.bodyHeight,
+    this.bottomPadding,
+    this.borderRadius,
+    this.homeTitleMaxLines,
     super.key,
   });
 
   const AppTopHeader.home({
     required String title,
     required String subtitle,
+    double? bodyHeight,
+    double? bottomPadding,
+    BorderRadiusGeometry? borderRadius,
+    int? titleMaxLines,
     Key? key,
   }) : this._(
           title: title,
           subtitle: subtitle,
           showBackButton: false,
+          bodyHeight: bodyHeight,
+          bottomPadding: bottomPadding,
+          borderRadius: borderRadius,
+          homeTitleMaxLines: titleMaxLines,
           key: key,
         );
 
@@ -35,46 +48,61 @@ class AppTopHeader extends StatelessWidget {
           key: key,
         );
 
-  static const double _homeBodyHeight = 168;
-  static const double _backBodyHeight = 138;
+  static const double _homeBodyHeight = 152;
 
   final String title;
   final String? subtitle;
   final bool showBackButton;
   final VoidCallback? onBackPressed;
+  final double? bodyHeight;
+  final double? bottomPadding;
+  final BorderRadiusGeometry? borderRadius;
+  final int? homeTitleMaxLines;
 
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
-    final bodyHeight = showBackButton ? _backBodyHeight : _homeBodyHeight;
-    final topPadding = showBackButton ? topInset + 8 : topInset + 12;
-    final bottomPadding = showBackButton ? 16.0 : 20.0;
+    if (showBackButton) {
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: AppTheme.surface,
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16, topInset + 8, 20, 6),
+          child: _BackHeaderContent(
+            title: title,
+            onBackPressed: onBackPressed ?? () => Navigator.of(context).pop(),
+          ),
+        ),
+      );
+    }
+
+    final resolvedBodyHeight = bodyHeight ?? _homeBodyHeight;
+    final topPadding = topInset + 12;
+    final resolvedBottomPadding = bottomPadding ?? 14.0;
+    final resolvedBorderRadius = borderRadius ?? BorderRadius.zero;
 
     return Container(
       width: double.infinity,
-      height: topInset + bodyHeight,
-      padding: EdgeInsets.fromLTRB(20, topPadding, 20, bottomPadding),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      height: topInset + resolvedBodyHeight,
+      padding: EdgeInsets.fromLTRB(20, topPadding, 20, resolvedBottomPadding),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.primary,
-            AppTheme.light,
+            AppTheme.headerStart,
+            AppTheme.headerEnd,
           ],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+        borderRadius: resolvedBorderRadius,
       ),
-      child: showBackButton
-          ? _BackHeaderContent(
-              title: title,
-              subtitle: subtitle,
-              onBackPressed: onBackPressed ?? () => Navigator.of(context).pop(),
-            )
-          : _HomeHeaderContent(
-              title: title,
-              subtitle: subtitle ?? '',
-            ),
+      child: _HomeHeaderContent(
+        title: title,
+        subtitle: subtitle ?? '',
+        titleMaxLines: homeTitleMaxLines ?? 2,
+      ),
     );
   }
 }
@@ -83,34 +111,40 @@ class _HomeHeaderContent extends StatelessWidget {
   const _HomeHeaderContent({
     required this.title,
     required this.subtitle,
+    required this.titleMaxLines,
   });
 
   final String title;
   final String subtitle;
+  final int titleMaxLines;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        const Spacer(),
         Text(
           title,
+          maxLines: titleMaxLines,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 24,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.4,
             height: 1.05,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           subtitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: Color(0xFFE6EFEA),
-            fontSize: 14,
-            height: 1.42,
+            fontSize: 12,
+            height: 1.3,
           ),
         ),
       ],
@@ -122,67 +156,42 @@ class _BackHeaderContent extends StatelessWidget {
   const _BackHeaderContent({
     required this.title,
     required this.onBackPressed,
-    this.subtitle,
   });
 
   final String title;
-  final String? subtitle;
   final VoidCallback onBackPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         GestureDetector(
           onTap: onBackPressed,
           behavior: HitTestBehavior.opaque,
           child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                SizedBox(width: 6),
-                Text(
-                  'Geri',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            padding: EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppTheme.textPrimary,
+              size: 18,
             ),
           ),
         ),
-        const Spacer(),
-        Text(
-          title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            subtitle!,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFFE6EFEA),
-              fontSize: 14,
-              height: 1.4,
+              color: AppTheme.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
             ),
           ),
-        ],
+        ),
       ],
     );
   }

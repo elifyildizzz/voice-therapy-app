@@ -7,7 +7,6 @@ import 'package:video_player/video_player.dart';
 import '../models/pitch_reading.dart';
 import '../services/live_pitch_tracker.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_top_header.dart';
 import '../widgets/live_pitch_chart.dart';
 import 'warmup_exercise.dart';
 
@@ -238,13 +237,13 @@ class _VocalExerciseVideoScreenState extends State<VocalExerciseVideoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light.copyWith(
+        value: SystemUiOverlayStyle.dark.copyWith(
           statusBarColor: Colors.transparent,
           systemNavigationBarColor: AppTheme.surface,
         ),
         child: Column(
           children: [
-            AppTopHeader.withBack(title: widget.exercise.titleEn),
+            _PlainVideoHeader(title: widget.exercise.titleEn),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
@@ -275,6 +274,52 @@ class _VocalExerciseVideoScreenState extends State<VocalExerciseVideoScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PlainVideoHeader extends StatelessWidget {
+  const _PlainVideoHeader({
+    required this.title,
+  });
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final topInset = MediaQuery.paddingOf(context).top;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, topInset + 8, 20, 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            behavior: HitTestBehavior.opaque,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: AppTheme.textPrimary,
+                size: 18,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -376,14 +421,21 @@ class _TherapistVideoCard extends StatelessWidget {
                               child: Container(
                                 width: 84,
                                 height: 84,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.card.withValues(alpha: 0.84),
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      AppTheme.headerStart,
+                                      AppTheme.headerEnd,
+                                    ],
+                                  ),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   Icons.play_arrow_rounded,
                                   size: 46,
-                                  color: AppTheme.primary,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -397,7 +449,7 @@ class _TherapistVideoCard extends StatelessWidget {
           Text(
             exercise.titleEn,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
             ),
@@ -422,8 +474,8 @@ class _TherapistVideoCard extends StatelessWidget {
                 allowScrubbing: true,
                 padding: EdgeInsets.zero,
                 colors: const VideoProgressColors(
-                  playedColor: AppTheme.primary,
-                  bufferedColor: AppTheme.sand,
+                  playedColor: AppTheme.headerEnd,
+                  bufferedColor: AppTheme.headerStart,
                   backgroundColor: AppTheme.soft,
                 ),
               ),
@@ -503,7 +555,7 @@ class _InstructionCard extends StatelessWidget {
           Text(
             'Kullanım Akışı',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
             ),
@@ -577,7 +629,7 @@ class _LivePitchCard extends StatelessWidget {
                 child: Text(
                   'Canlı Pitch Grafiği',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.textPrimary,
                   ),
@@ -596,7 +648,7 @@ class _LivePitchCard extends StatelessWidget {
               Text(
                 currentHz == null ? '--' : currentHz!.toStringAsFixed(1),
                 style: const TextStyle(
-                  fontSize: 36,
+                  fontSize: 30,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.primary,
                   height: 1,
@@ -608,7 +660,7 @@ class _LivePitchCard extends StatelessWidget {
                 child: Text(
                   'Hz',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.textMuted,
                   ),

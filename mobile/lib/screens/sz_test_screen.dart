@@ -77,7 +77,7 @@ class _SzTestScreenState extends State<SzTestScreen> {
           title: const Text(
             'S/Z Testi',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppTheme.darkBlue,
             ),
@@ -283,7 +283,7 @@ class _SzTestScreenState extends State<SzTestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.surface,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light.copyWith(
           statusBarColor: Colors.transparent,
@@ -546,7 +546,7 @@ class _ProgressCard extends StatelessWidget {
           Text(
             currentStep.title,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: Color(0xFF111827),
             ),
@@ -594,7 +594,7 @@ class _ActiveStepCard extends StatelessWidget {
             child: Text(
               currentStep.letter,
               style: const TextStyle(
-                fontSize: 40,
+                fontSize: 32,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.darkBlue,
               ),
@@ -614,7 +614,7 @@ class _ActiveStepCard extends StatelessWidget {
           Text(
             formatSzSeconds(elapsedSeconds),
             style: const TextStyle(
-              fontSize: 28,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: Color(0xFF111827),
             ),

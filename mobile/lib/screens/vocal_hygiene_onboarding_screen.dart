@@ -121,8 +121,6 @@ class _VocalHygieneOnboardingScreenState
           children: [
             const AppTopHeader.withBack(
               title: 'Vokal Hijyenini Kişiselleştir',
-              subtitle:
-                  'Kısa bir değerlendirme ile sana özel öneriler hazırlayacağız.',
             ),
             Expanded(
               child: Padding(
@@ -152,7 +150,7 @@ class _VocalHygieneOnboardingScreenState
                     Text(
                       question.title,
                       style: const TextStyle(
-                        fontSize: 24,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textPrimary,
                         height: 1.16,
@@ -276,7 +274,7 @@ class _OptionCard extends StatelessWidget {
                 child: Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 17,
+                    fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: AppTheme.textPrimary,
                   ),

@@ -22,11 +22,7 @@ class VoiceAnalyzeConsentScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const AppTopHeader.home(
-              title: 'Ses Sağlığı Ön Tarama Testi',
-              subtitle:
-                  'Kayda başlamadan önce kısa bilgilendirmeyi inceleyin.',
-            ),
+            const AppTopHeader.withBack(title: 'Ses Sağlığı Ön Tarama Testi'),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
@@ -37,14 +33,14 @@ class VoiceAnalyzeConsentScreen extends StatelessWidget {
                       icon: Icons.error_outline_rounded,
                       title: 'Önemli Bilgilendirme',
                       content:
-                          'Bu uygulama yalnızca ses sağlığına yönelik ön değerlendirme sağlar ve tıbbi tanı yerine geçmez.\n\nSesinizde olağandışı bir durum fark ederseniz, bir Kulak Burun Boğaz uzmanına başvurmanız önerilir.',
+                          'Bu uygulama yalnızca ses sağlığına yönelik ön değerlendirme sağlar ve tıbbi tanı yerine geçmez.\n\nÖn tarama için sizden normal konuşma tonunda ayrı ayrı "A" ve "İ" sesi kaydı alınacaktır.\n\nSesinizde olağandışı bir durum fark ederseniz, bir Kulak Burun Boğaz uzmanına başvurmanız önerilir.',
                     ),
                     const SizedBox(height: 12),
                     const _NoticeCard(
                       icon: Icons.verified_user_outlined,
                       title: 'Gizlilik ve Güvenlik',
                       content:
-                          'Ses verileriniz KVKK kapsamında hiçbir şekilde saklanmamaktadır.',
+                          'Ses verileriniz yalnızca ön tarama analizi için işlenir ve KVKK kapsamında kalıcı olarak saklanmaz.',
                     ),
                     const Spacer(),
                     Align(

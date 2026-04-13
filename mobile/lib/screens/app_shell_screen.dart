@@ -57,7 +57,7 @@ class _AppShellScreenState extends State<AppShellScreen> {
               const Text(
                 'Bu bölüm için giriş gerekli',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF1F2937),
                 ),

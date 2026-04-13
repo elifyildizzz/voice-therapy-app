@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/app_user.dart';
+import '../models/vocal_hygiene_personalization.dart';
 import '../services/auth_service.dart';
+import '../services/vocal_hygiene_repository.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_top_header.dart';
 import 'auth_screen.dart';
 import 'breath_control_screen.dart';
 import 'vocal_function_exercises_screen.dart';
 import 'vocal_hygiene_onboarding_screen.dart';
+import 'vocal_hygiene_screen.dart';
 import 'voice_assessment_tests_screen.dart';
+
+const Color _homeAccentGreen = Color(0xFF4D6B57);
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -69,7 +73,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _openVocalHygiene(BuildContext context, AppUser? currentUser) {
+  Future<void> _openVocalHygiene(
+      BuildContext context, AppUser? currentUser) async {
     if (currentUser == null) {
       _showLoginRequiredDialog(
         context,
@@ -80,11 +85,24 @@ class HomeScreen extends StatelessWidget {
       return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const VocalHygieneOnboardingScreen(),
-      ),
-    );
+    final latestResponse =
+        await VocalHygieneRepository.instance.fetchLatestResponse();
+    if (!context.mounted) {
+      return;
+    }
+
+    final route = latestResponse == null
+        ? MaterialPageRoute<void>(
+            builder: (_) => const VocalHygieneOnboardingScreen(),
+          )
+        : MaterialPageRoute<void>(
+            builder: (_) => VocalHygieneScreen(
+              personalizationResult:
+                  VocalHygienePersonalizer.evaluate(latestResponse),
+            ),
+          );
+
+    Navigator.of(context).push(route);
   }
 
   @override
@@ -92,222 +110,68 @@ class HomeScreen extends StatelessWidget {
     final currentUser = AuthService.instance.currentUser;
     final headerTitle = currentUser == null
         ? 'Hoş geldiniz'
-        : 'Hoş geldiniz,\n${currentUser.firstName}';
+        : 'Hoş geldiniz, ${currentUser.firstName}';
 
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light.copyWith(
+        value: SystemUiOverlayStyle.dark.copyWith(
           statusBarColor: Colors.transparent,
           systemNavigationBarColor: AppTheme.surface,
         ),
-        child: Column(
-          children: [
-            AppTopHeader.home(
-              title: headerTitle,
-              subtitle:
-                  'Terapistinizin önerdiği egzersiz kategorisini seçin ve günlük akışınızı sürdürün.',
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-                children: [
-                  const _DailyFocusCard(),
-                  const SizedBox(height: 18),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final tileWidth = (constraints.maxWidth - 14) / 2;
-
-                      return Wrap(
-                        spacing: 14,
-                        runSpacing: 14,
-                        children: [
-                          _CategoryTile(
-                            width: tileWidth,
-                            icon: Icons.spa_outlined,
-                            title: 'Vokal Hijyen',
-                            backgroundColor: AppTheme.soft,
-                            iconColor: AppTheme.primary,
-                            onTap: () =>
-                                _openVocalHygiene(context, currentUser),
-                          ),
-                          _CategoryTile(
-                            width: tileWidth,
-                            icon: Icons.air_rounded,
-                            title: 'Nefes\nKontrolü',
-                            backgroundColor: const Color(0xFFF7EEE8),
-                            iconColor: AppTheme.terracotta,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => const BreathControlScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          _CategoryTile(
-                            width: tileWidth,
-                            icon: Icons.music_note_rounded,
-                            title: 'Vokal\nFonksiyon',
-                            backgroundColor: const Color(0xFFF9F2DF),
-                            iconColor: const Color(0xFFB98A2E),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) =>
-                                      const VocalFunctionExercisesScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          _CategoryTile(
-                            width: tileWidth,
-                            icon: Icons.bar_chart_rounded,
-                            title: 'Ses\nDeğerlendirme',
-                            backgroundColor: const Color(0xFFF3ECE6),
-                            iconColor: AppTheme.light,
-                            onTap: () =>
-                                _openAssessmentTests(context, currentUser),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 18),
-                  const _SupportCard(),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DailyFocusCard extends StatelessWidget {
-  const _DailyFocusCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.cardBorder),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Günlük Akış',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '4 Kategori',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
-                    height: 1,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Hijyen, nefes, fonksiyon ve değerlendirme akışı tek ekranda hazır.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textMuted,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: AppTheme.soft,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Icon(
-              Icons.favorite_border_rounded,
-              color: AppTheme.primary,
-              size: 30,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({
-    required this.width,
-    required this.icon,
-    required this.title,
-    required this.backgroundColor,
-    required this.iconColor,
-    this.onTap,
-  });
-
-  final double width;
-  final IconData icon;
-  final String title;
-  final Color backgroundColor;
-  final Color iconColor;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(26),
-        child: Ink(
-          width: width,
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(26),
-            border:
-                Border.all(color: AppTheme.cardBorder.withValues(alpha: 0.7)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: SafeArea(
+          bottom: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
             children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.72),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: iconColor, size: 26),
-              ),
-              const SizedBox(height: 38),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 17,
+              _WelcomeCard(title: headerTitle),
+              const SizedBox(height: 20),
+              const Text(
+                'Egzersiz Kategorileri',
+                style: TextStyle(
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
-                  height: 1.15,
+                  color: AppTheme.textMuted,
                 ),
+              ),
+              const SizedBox(height: 12),
+              _CategoryTile(
+                icon: Icons.spa_outlined,
+                title: 'Vokal Hijyen',
+                subtitle: 'Günlük ses sağlığı alışkanlıkları',
+                onTap: () => _openVocalHygiene(context, currentUser),
+              ),
+              const SizedBox(height: 12),
+              _CategoryTile(
+                icon: Icons.air_rounded,
+                title: 'Nefes Kontrolü',
+                subtitle: 'Diyafram ve nefes egzersizleri',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const BreathControlScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              _CategoryTile(
+                icon: Icons.music_note_rounded,
+                title: 'Vokal Fonksiyon',
+                subtitle: 'Ses üretimi ve teknik çalışma',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const VocalFunctionExercisesScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              _CategoryTile(
+                icon: Icons.bar_chart_rounded,
+                title: 'Ses Değerlendirme',
+                subtitle: 'Ses analizi ve ilerleme takibi',
+                onTap: () => _openAssessmentTests(context, currentUser),
               ),
             ],
           ),
@@ -317,35 +181,162 @@ class _CategoryTile extends StatelessWidget {
   }
 }
 
-class _SupportCard extends StatelessWidget {
-  const _SupportCard();
+class _WelcomeCard extends StatelessWidget {
+  const _WelcomeCard({required this.title});
+
+  final String title;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      constraints: const BoxConstraints(minHeight: 126),
       decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.cardBorder),
-      ),
-      child: const Row(
-        children: [
-          Icon(
-            Icons.lightbulb_outline_rounded,
-            color: AppTheme.terracotta,
+        color: const Color(0xFFDCE7D4),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFCCD9C4)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x120F1B16),
+            blurRadius: 18,
+            offset: Offset(0, 8),
           ),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Gün içinde dilediğiniz modülden devam ederek kişisel ses rutininizi sürdürebilirsiniz.',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppTheme.textMuted,
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -4,
+            bottom: -30,
+            child: IgnorePointer(
+              child: Image.asset(
+                'assets/branding/plant.png',
+                width: 82,
+                fit: BoxFit.contain,
               ),
             ),
           ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 220),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: _homeAccentGreen,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 220),
+                child: const Text(
+                  'Terapi önerilerine göre bugün kendine iyi bak.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _CategoryTile extends StatelessWidget {
+  static const Color _iconBackground = Color(0xFFF0F5E9);
+  static const Color _iconBorder = Color(0xFFE3EAD9);
+  static const Color _iconForeground = _homeAccentGreen;
+  static const Color _chevronColor = Color(0xFFA8B7A2);
+
+  const _CategoryTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.card,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.cardBorder),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x120F1B16),
+                blurRadius: 16,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: _iconBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _iconBorder),
+                ),
+                child: Icon(icon, color: _iconForeground, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textMuted,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 24,
+                color: _chevronColor,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

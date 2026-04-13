@@ -30,10 +30,7 @@ class BreathControlVideoScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            AppTopHeader.withBack(
-              title: 'Nefes Kontrolü',
-              subtitle: exercise.titleTr,
-            ),
+            AppTopHeader.withBack(title: exercise.titleTr),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
@@ -81,7 +78,7 @@ class _BreathTimerRing extends StatelessWidget {
                 Text(
                   '$durationMinutes',
                   style: const TextStyle(
-                    fontSize: 54,
+                    fontSize: 34,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.primary,
                     height: 1,
@@ -129,7 +126,7 @@ class _BreathStepsCard extends StatelessWidget {
           const Text(
             'Adımlar:',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
             ),

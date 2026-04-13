@@ -10,6 +10,10 @@ import '../theme/app_theme.dart';
 import '../utils/app_formatters.dart';
 import 'sz_test_screen.dart';
 
+const Color _profileAccentGreen = AppTheme.homeAccent;
+const Color _profileSoftGreen = Color(0xFFF0F5E9);
+const Color _profileGreenBorder = Color(0xFFCCD9C4);
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -558,7 +562,7 @@ class _ProfileEditorSheetState extends State<_ProfileEditorSheet> {
             const Text(
               'Profili Düzenle',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.darkBlue,
               ),
@@ -658,11 +662,12 @@ class _ProfileHeaderCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.primary,
-            AppTheme.light,
+            AppTheme.homeCard,
+            Color(0xFFCFE0C8),
           ],
         ),
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: _profileGreenBorder),
         boxShadow: AppTheme.softShadow,
       ),
       child: Row(
@@ -671,17 +676,19 @@ class _ProfileHeaderCard extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
+              color: _profileAccentGreen.withValues(alpha: 0.18),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+              border: Border.all(
+                color: _profileAccentGreen.withValues(alpha: 0.12),
+              ),
             ),
             alignment: Alignment.center,
             child: Text(
               initials,
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: _profileAccentGreen,
               ),
             ),
           ),
@@ -693,9 +700,9 @@ class _ProfileHeaderCard extends StatelessWidget {
                 Text(
                   fullName,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    color: _profileAccentGreen,
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -704,7 +711,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                   lastSessionDate,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Color(0xFFE7EFEA),
+                    color: AppTheme.textMuted,
                   ),
                 ),
               ],
@@ -715,7 +722,7 @@ class _ProfileHeaderCard extends StatelessWidget {
             splashRadius: 22,
             icon: const Icon(
               Icons.edit_outlined,
-              color: Colors.white,
+              color: _profileAccentGreen,
             ),
           ),
         ],
@@ -785,7 +792,7 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isActive ? AppTheme.primary : Colors.transparent,
+      color: isActive ? _profileAccentGreen : Colors.transparent,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -824,7 +831,11 @@ class _ProgressTrendCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.bar_chart_rounded, color: AppTheme.primary, size: 22),
+              Icon(
+                Icons.bar_chart_rounded,
+                color: _profileAccentGreen,
+                size: 22,
+              ),
               SizedBox(width: 8),
               Text(
                 'İlerleme Trendi',
@@ -940,12 +951,12 @@ class _TrendChartPainter extends CustomPainter {
       ..color = AppTheme.cardBorder
       ..strokeWidth = 1;
     final linePaint = Paint()
-      ..color = AppTheme.primary
+      ..color = _profileAccentGreen
       ..strokeWidth = 2.8
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-    final pointPaint = Paint()..color = AppTheme.primary;
+    final pointPaint = Paint()..color = _profileAccentGreen;
 
     for (var i = 0; i < 4; i++) {
       final y = topPadding + (chartHeight * i / 3);
@@ -1232,13 +1243,13 @@ class _ActivityCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppTheme.soft,
+              color: _profileSoftGreen,
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               Icons.check_rounded,
               size: 20,
-              color: AppTheme.primary,
+              color: _profileAccentGreen,
             ),
           ),
           const SizedBox(width: 12),
@@ -1259,7 +1270,7 @@ class _ActivityCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
+                    color: _profileAccentGreen,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1304,10 +1315,10 @@ class _EmptyStateCard extends StatelessWidget {
             width: 76,
             height: 76,
             decoration: BoxDecoration(
-              color: AppTheme.soft,
+              color: _profileSoftGreen,
               borderRadius: BorderRadius.circular(22),
             ),
-            child: Icon(icon, size: 38, color: AppTheme.primary),
+            child: Icon(icon, size: 38, color: _profileAccentGreen),
           ),
           const SizedBox(height: 10),
           Text(

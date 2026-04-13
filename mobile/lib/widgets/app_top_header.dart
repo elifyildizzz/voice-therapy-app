@@ -72,7 +72,12 @@ class AppTopHeader extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(16, topInset + 8, 20, 6),
           child: _BackHeaderContent(
             title: title,
-            onBackPressed: onBackPressed ?? () => Navigator.of(context).pop(),
+            onBackPressed: onBackPressed ??
+                () {
+                  // Avoid popping the root route when this header is used inside
+                  // a tab (e.g. VoiceAnalyzeConsentScreen) where there is no stack.
+                  Navigator.of(context).maybePop();
+                },
           ),
         ),
       );

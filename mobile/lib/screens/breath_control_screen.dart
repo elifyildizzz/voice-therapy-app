@@ -26,7 +26,6 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
   bool _stopAfterStart = false;
   double _elapsedSeconds = 0;
   double _bestSeconds = 0;
-  String? _bestRecordingPath;
   final List<_PhonationAttempt> _attempts = <_PhonationAttempt>[];
 
   Future<void> _startRecording() async {
@@ -129,9 +128,8 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
       (_stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1),
     );
 
-    String? path;
     try {
-      path = await _audioRecorder.stop();
+      await _audioRecorder.stop();
     } catch (_) {
       if (!mounted) {
         return;
@@ -149,10 +147,7 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
       return;
     }
 
-    final attempt = _PhonationAttempt(
-      seconds: roundedSeconds,
-      recordedPath: path,
-    );
+    final attempt = _PhonationAttempt(seconds: roundedSeconds);
     final isNewBest = roundedSeconds > _bestSeconds;
 
     setState(() {
@@ -162,7 +157,6 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
       _attempts.add(attempt);
       if (isNewBest) {
         _bestSeconds = roundedSeconds;
-        _bestRecordingPath = path;
       }
     });
 
@@ -175,7 +169,6 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
     setState(() {
       _elapsedSeconds = 0;
       _bestSeconds = 0;
-      _bestRecordingPath = null;
       _attempts.clear();
     });
   }
@@ -246,7 +239,6 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
                     _AttemptsCard(
                       attempts: _attempts,
                       bestSeconds: _bestSeconds,
-                      bestRecordingPath: _bestRecordingPath,
                       onReset: _attempts.isEmpty ? null : _resetSession,
                     ),
                   ],
@@ -265,57 +257,48 @@ class _DiaphragmIntroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.cardBorder),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Diyafram nefesi',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Nefes alırken göğüs yerine karın bölgenizin yumuşakça genişlemesine izin verin. Nefesi verirken karın içeri döner ve sesinizi bu destekle taşırsınız.',
-            style: TextStyle(
-              fontSize: 15,
-              height: 1.45,
-              color: AppTheme.textMuted,
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            height: 220,
-            child: CustomPaint(
-              painter: _DiaphragmPainter(),
-              child: const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 98),
-                  child: Text(
-                    'Karın bir balon gibi genişler',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primary,
-                    ),
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 220,
+          child: CustomPaint(
+            painter: _DiaphragmPainter(),
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 98),
+                child: Text(
+                  'Karın bir balon gibi genişler',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primary,
                   ),
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        SizedBox(height: 10),
+        Text(
+          'Diyafram nefesi',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        SizedBox(height: 6),
+        Text(
+          'Nefes alırken göğüs yerine karın bölgenizin yumuşakça genişlemesine izin verin. Nefesi verirken karın içeri döner ve sesinizi bu destekle taşırsınız.',
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.4,
+            color: AppTheme.textMuted,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -398,7 +381,7 @@ class _RecordingCard extends StatelessWidget {
           const Text(
             '/a/',
             style: TextStyle(
-              fontSize: 42,
+              fontSize: 34,
               fontWeight: FontWeight.w800,
               color: AppTheme.primary,
               height: 1,
@@ -441,15 +424,17 @@ class _RecordingCard extends StatelessWidget {
             onTapCancel: canPress ? () => onPressEnd() : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: 126,
-              height: 126,
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isRecording
-                    ? const Color(0xFFCF5A5A)
-                    : isStarting
-                        ? AppTheme.light
-                        : AppTheme.primary,
+                color: isRecording ? const Color(0xFFCF5A5A) : AppTheme.card,
+                border: Border.all(
+                  color: isRecording
+                      ? const Color(0xFFCF5A5A)
+                      : AppTheme.homeAccent,
+                  width: 2,
+                ),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x24163B55),
@@ -460,22 +445,22 @@ class _RecordingCard extends StatelessWidget {
               ),
               child: Icon(
                 isRecording ? Icons.stop_rounded : Icons.mic_none_rounded,
-                color: Colors.white,
-                size: 56,
+                color: isRecording ? Colors.white : AppTheme.homeAccent,
+                size: 44,
               ),
             ),
           ),
           const SizedBox(height: 12),
           Text(
             isRecording
-                ? 'Bırakınca kayıt bitecek'
+                ? 'Kaydı Durdur'
                 : isStarting
                     ? 'Mikrofon hazırlanıyor'
-                    : 'Basılı tutarak kaydet',
+                    : 'Kaydı Başlat',
             style: const TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primary,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
             ),
           ),
         ],
@@ -532,17 +517,17 @@ class _AttemptsCard extends StatelessWidget {
   const _AttemptsCard({
     required this.attempts,
     required this.bestSeconds,
-    required this.bestRecordingPath,
     required this.onReset,
   });
 
   final List<_PhonationAttempt> attempts;
   final double bestSeconds;
-  final String? bestRecordingPath;
   final VoidCallback? onReset;
 
   @override
   Widget build(BuildContext context) {
+    final lastSeconds = attempts.isNotEmpty ? attempts.last.seconds : 0.0;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -573,79 +558,37 @@ class _AttemptsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            bestSeconds > 0
-                ? 'Maksimum /a/ süreniz ${_formatSeconds(bestSeconds)}.'
-                : 'Henüz /a/ kaydı alınmadı.',
-            style: const TextStyle(
-              fontSize: 15,
-              height: 1.45,
-              color: AppTheme.textMuted,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _MetricTile(
+                  label: 'En iyi',
+                  value: _formatSeconds(bestSeconds),
+                  highlight: true,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _MetricTile(
+                  label: 'En son',
+                  value: _formatSeconds(lastSeconds),
+                ),
+              ),
+            ],
           ),
-          if (bestRecordingPath != null) ...[
-            const SizedBox(height: 8),
-            const Text(
-              'En uzun kayıt bu oturumda saklandı.',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppTheme.textMuted,
+          if (attempts.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 10),
+              child: Text(
+                'Henüz deneme yok.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ],
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: attempts.isEmpty
-                ? const [
-                    _AttemptChip(label: 'Henüz deneme yok'),
-                  ]
-                : List<Widget>.generate(
-                    attempts.length,
-                    (index) {
-                      final seconds = attempts[index].seconds;
-                      final isBest = seconds == bestSeconds && bestSeconds > 0;
-
-                      return _AttemptChip(
-                        label:
-                            '${index + 1}. deneme • ${_formatSeconds(seconds)}${isBest ? ' • en uzun' : ''}',
-                        isBest: isBest,
-                      );
-                    },
-                  ),
-          ),
         ],
-      ),
-    );
-  }
-}
-
-class _AttemptChip extends StatelessWidget {
-  const _AttemptChip({
-    required this.label,
-    this.isBest = false,
-  });
-
-  final String label;
-  final bool isBest;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isBest ? AppTheme.soft : const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          color: isBest ? AppTheme.primary : const Color(0xFF475569),
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }
@@ -654,14 +597,14 @@ class _AttemptChip extends StatelessWidget {
 class _PhonationAttempt {
   const _PhonationAttempt({
     required this.seconds,
-    required this.recordedPath,
   });
 
   final double seconds;
-  final String? recordedPath;
 }
 
 class _DiaphragmPainter extends CustomPainter {
+  const _DiaphragmPainter();
+
   @override
   void paint(Canvas canvas, Size size) {
     final centerX = size.width / 2;

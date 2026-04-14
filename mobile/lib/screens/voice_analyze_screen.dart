@@ -552,6 +552,10 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                                     !_isSending
                                 ? _sendToBackend
                                 : null,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppTheme.homeIconBackground,
+                              foregroundColor: AppTheme.homeAccent,
+                            ),
                             icon: const Icon(Icons.analytics_outlined),
                             label: const Text('Ön Taramayı Başlat'),
                           ),
@@ -905,6 +909,10 @@ class _VoiceAnalyzeResultScreen extends StatelessWidget {
                     const Spacer(),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop(),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.homeIconBackground,
+                        foregroundColor: AppTheme.homeAccent,
+                      ),
                       child: const Text('Kayıt Ekranına Dön'),
                     ),
                   ],

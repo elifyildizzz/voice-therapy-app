@@ -261,11 +261,8 @@ class _VocalExerciseVideoScreenState extends State<VocalExerciseVideoScreen> {
                     ),
                     if (widget.exercise.howToText != null) ...[
                       const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: _HowToSection(
-                          text: widget.exercise.howToText!,
-                        ),
+                      _HowToSection(
+                        text: widget.exercise.howToText!,
                       ),
                     ],
                     const SizedBox(height: 28),
@@ -592,47 +589,70 @@ class _HowToSection extends StatelessWidget {
         .where((item) => item.isNotEmpty)
         .toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Nasıl Yapmalısın?',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            color: AppTheme.textPrimary,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(18, 16, 18, 10),
+            child: Text(
+              'Nasıl Yapmalısın?',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.textPrimary,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-        for (final item in items)
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: AppTheme.cardBorder,
+          ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+            child: Column(
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Icon(
-                    Icons.circle,
-                    size: 7,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    item,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: AppTheme.textMuted,
-                      height: 1.45,
+                for (var index = 0; index < items.length; index++)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: index == items.length - 1 ? 0 : 6,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Icon(
+                            Icons.circle,
+                            size: 6,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            items[index],
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textPrimary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
               ],
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:video_player/video_player.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/app_top_header.dart';
 import 'vocal_exercise_video_screen.dart';
 import 'warmup_exercise.dart';
 
@@ -12,75 +14,117 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
   static const List<WarmupExercise> _exercises = [
     WarmupExercise(
       titleTr: 'Egzersiz 1',
-      titleEn: 'Germe egzersizi',
+      titleEn: 'Isınma Egzersizi',
+      durationMinutes: 4,
+      level: 'Kolay',
+      levelColor: AppTheme.soft,
+      levelTextColor: AppTheme.primary,
+      videoAssetPath: 'assets/videos/vocal_function/isinma_egzersizi.mp4',
+      iconAssetPath: 'assets/icons/vocal_function/wind.svg',
+      videoCropTopFraction: 312 / 848,
+      videoCropHeightFraction: 224 / 848,
+      howToText:
+          'Derin bir diyafram nefesi alın. En rahat olduğunuz ses tonunuzda, "/i/" sesini nefesiniz yettiği kadar uzatın. Sesi sürdürürken boğazınızı sıkmadığınızdan emin olun. Bu egzersiz, sesi ısıtmak için yapılmaktadır. Bu egzersiz süre takibi ile yapılır. Uzatma süreniz kayıt altına alınır. Performansınız süreye göre izlenir.',
+    ),
+    WarmupExercise(
+      titleTr: 'Egzersiz 2',
+      titleEn: 'Germe Egzersizi',
       durationMinutes: 4,
       level: 'Orta',
       levelColor: AppTheme.sand,
       levelTextColor: AppTheme.terracotta,
+      videoAssetPath: 'assets/videos/vocal_function/germe_egzersizi.mp4',
+      iconAssetPath: 'assets/icons/vocal_function/user-sound-bold.svg',
+      videoCropTopFraction: 266 / 832,
+      videoCropHeightFraction: 304 / 832,
+      howToText:
+          'Derin bir nefes alın. Çıkarabildiğiniz en kalın (pes) tondan başlayarak, sesinizi kesintisiz bir şekilde en ince (tiz) tonunuza kadar yükseltin. Sesi yükseltirken boğazınızı sıkmadığınızdan emin olun. Bu egzersiz ses tellerini germek için yapılmaktadır.  İki kez yapılmalıdır. Süre ölçümü yapılmaz.',
     ),
     WarmupExercise(
-      titleTr: 'Egzersiz 2',
-      titleEn: 'Gevşeme egzersizi',
+      titleTr: 'Egzersiz 3',
+      titleEn: 'Gevşeme Egzersizi',
       durationMinutes: 5,
       level: 'Kolay',
       levelColor: AppTheme.soft,
       levelTextColor: AppTheme.primary,
       videoAssetPath: 'assets/videos/vocal_function/gevseme.mp4',
+      iconAssetPath: 'assets/icons/vocal_function/pulse-bold.svg',
       videoCropTopFraction: 288 / 848,
       videoCropHeightFraction: 272 / 848,
+      howToText:
+          'Derin bir nefes alın. Çıkarabildiğiniz en ince (tiz) tondan başlayarak, sesinizi kesintisiz bir şekilde en kalın (pes) tonunuza kadar indirin. Sesi indirirken boğazınızı sıkmadığınızdan emin olun. Bu egzersiz ses tellerini gevşetmek için yapılmaktadır. İki kez yapılmalıdır. Süre ölçümü yapılmaz.',
     ),
     WarmupExercise(
-      titleTr: 'Egzersiz 3',
-      titleEn: 'Tiz perdede fonasyon',
+      titleTr: 'Egzersiz 4',
+      titleEn: 'Tiz Perdede Fonasyon',
       durationMinutes: 4,
       level: 'Orta',
       levelColor: AppTheme.sand,
       levelTextColor: AppTheme.terracotta,
+      videoAssetPath: 'assets/videos/vocal_function/tiz_perdede_fonasyon.mp4',
+      iconAssetPath: 'assets/icons/vocal_function/trend-up-bold.svg',
+      videoCropTopFraction: 272 / 848,
+      videoCropHeightFraction: 304 / 848,
+      howToText:
+          'Derin bir nefes alın. Çıkarabildiğiniz en rahat ve en ince (tiz) ses tonuyla, sesi kesintisiz bir şekilde uzatabildiğiniz kadar uzatın. Sesi sürdürürken boğazınızı sıkmadığınızdan emin olun.  Bu egzersiz süre takibi ile yapılır. Uzatma süreniz kayıt altına alınır. Performansınız süreye göre izlenir.',
     ),
     WarmupExercise(
-      titleTr: 'Egzersiz 4',
-      titleEn: 'Uzatılmış fonasyon',
+      titleTr: 'Egzersiz 5',
+      titleEn: 'Uzatılmış Fonasyon',
       durationMinutes: 5,
       level: 'Orta',
       levelColor: AppTheme.sand,
       levelTextColor: AppTheme.terracotta,
       videoAssetPath: 'assets/videos/vocal_function/uzatilmis_fonasyon.mp4',
+      iconAssetPath: 'assets/icons/vocal_function/waveform-bold.svg',
       videoCropTopFraction: 266 / 832,
       videoCropHeightFraction: 304 / 832,
+      howToText:
+          'Derin bir nefes alın. En rahat, günlük konuşma tonunuzdaki (normal) sesle, sesi kesintisiz bir şekilde uzatabildiğiniz kadar uzatın. Sesi sürdürürken boğazınızı sıkmadığınızdan emin olun.  Bu egzersiz süre takibi ile yapılır. Uzatma süreniz kayıt altına alınır. Performansınız süreye göre izlenir.',
     ),
     WarmupExercise(
-      titleTr: 'Egzersiz 5',
-      titleEn: 'Pes perdede fonasyon',
+      titleTr: 'Egzersiz 6',
+      titleEn: 'Pes Perdede Fonasyon',
       durationMinutes: 4,
       level: 'Kolay',
       levelColor: AppTheme.soft,
       levelTextColor: AppTheme.primary,
       videoAssetPath: 'assets/videos/vocal_function/pes_perdede_fonasyon.mp4',
+      iconAssetPath: 'assets/icons/vocal_function/trend-down-bold.svg',
       videoCropTopFraction: 272 / 848,
       videoCropHeightFraction: 304 / 848,
       howToText:
-          'Çıkarabildiğiniz en kalın (pes) ve pürüzsüz sesle videodaki ritmi takip edin. Sesinizi zorlamadan, göğsünüzdeki titreşimi hissederek egzersizi tamamlayın.',
+          'Derin bir nefes alın. Çıkarabildiğiniz en rahat ve en kalın (pes) ses tonuyla, sesi kesintisiz bir şekilde uzatabildiğiniz kadar uzatın. Sesi sürdürürken boğazınızı sıkmadığınızdan emin olun. Bu egzersiz süre takibi ile yapılır. Uzatma süreniz kayıt altına alınır. Performansınız süreye göre izlenir.',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.surface,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.dark.copyWith(
+        value: SystemUiOverlayStyle.light.copyWith(
           statusBarColor: Colors.transparent,
           systemNavigationBarColor: AppTheme.surface,
         ),
         child: Column(
           children: [
-            const _PlainPageHeader(title: 'Vokal Fonksiyon Egzersizleri'),
+            const AppTopHeader.withBack(
+              title: 'Vokal Fonksiyon Egzersizleri',
+              showDivider: true,
+            ),
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                itemCount: _exercises.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+                itemCount: _exercises.length + 1,
+                separatorBuilder: (context, index) =>
+                    SizedBox(height: index == 0 ? 18 : 12),
                 itemBuilder: (context, index) {
-                  final item = _exercises[index];
+                  if (index == 0) {
+                    return const _ExerciseFrequencyNote();
+                  }
+
+                  final item = _exercises[index - 1];
                   return _ExerciseCard(
                     exercise: item,
                     onTap: () {
@@ -102,49 +146,54 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
   }
 }
 
-class _PlainPageHeader extends StatelessWidget {
-  const _PlainPageHeader({
-    required this.title,
-  });
-
-  final String title;
+class _ExerciseFrequencyNote extends StatelessWidget {
+  const _ExerciseFrequencyNote();
 
   @override
   Widget build(BuildContext context) {
-    final topInset = MediaQuery.paddingOf(context).top;
-
     return Container(
-      padding: EdgeInsets.fromLTRB(16, topInset + 8, 20, 6),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppTheme.cardBorder),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE3EAE6)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: AppTheme.textPrimary,
-                size: 18,
-              ),
+          Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(
+              Icons.repeat_rounded,
+              color: AppTheme.textPrimary,
+              size: 18,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 9),
           Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-                color: AppTheme.textPrimary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Egzersizler günde 2 kez uygulanmalıdır',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                    height: 1.2,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Sabah ve akşam tekrar edilmesi önerilir',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textPrimary,
+                    height: 1.25,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -154,6 +203,8 @@ class _PlainPageHeader extends StatelessWidget {
 }
 
 class _ExerciseCard extends StatelessWidget {
+  static const Color _chevronColor = Color(0xFF8DA292);
+
   const _ExerciseCard({
     required this.exercise,
     required this.onTap,
@@ -166,46 +217,33 @@ class _ExerciseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.all(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
             color: AppTheme.card,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.cardBorder),
             boxShadow: AppTheme.softShadow,
           ),
           child: Row(
             children: [
               Container(
-                width: 70,
-                height: 70,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: AppTheme.light.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(18),
+                  color: AppTheme.homeIconBackground,
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppTheme.light.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    const Center(
-                      child: Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
-                  ],
+                child: Center(
+                  child: _ExerciseIcon(assetPath: exercise.iconAssetPath),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,7 +252,7 @@ class _ExerciseCard extends StatelessWidget {
                       exercise.titleEn,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: AppTheme.textPrimary,
                       ),
                     ),
@@ -222,19 +260,20 @@ class _ExerciseCard extends StatelessWidget {
                     Text(
                       exercise.titleTr,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: AppTheme.textMuted,
+                        height: 1.35,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 3),
                     Row(
                       children: [
                         const Icon(
                           Icons.schedule_rounded,
-                          size: 15,
+                          size: 13,
                           color: AppTheme.textMuted,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 4),
                         _ExerciseDurationText(
                           exercise: exercise,
                         ),
@@ -243,15 +282,44 @@ class _ExerciseCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
               const Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: AppTheme.textMuted,
-                size: 18,
+                Icons.chevron_right_rounded,
+                color: _chevronColor,
+                size: 24,
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ExerciseIcon extends StatelessWidget {
+  const _ExerciseIcon({
+    required this.assetPath,
+  });
+
+  final String? assetPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final assetPath = this.assetPath;
+    if (assetPath == null) {
+      return const Icon(
+        Icons.play_arrow_rounded,
+        color: AppTheme.homeAccent,
+        size: 22,
+      );
+    }
+
+    return SvgPicture.asset(
+      assetPath,
+      width: 24,
+      height: 24,
+      colorFilter: const ColorFilter.mode(
+        AppTheme.homeAccent,
+        BlendMode.srcIn,
       ),
     );
   }

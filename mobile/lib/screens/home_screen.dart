@@ -280,7 +280,6 @@ class _WelcomeCard extends StatelessWidget {
 }
 
 class _CategoryTile extends StatelessWidget {
-  static const Color _iconBackground = Color(0xFFE6F0E6);
   static const Color _iconBorder = Color(0xFFD4E0D4);
   static const Color _iconForeground = _homeAccentGreen;
   static const Color _chevronColor = Color(0xFFA8B7A2);
@@ -324,7 +323,7 @@ class _CategoryTile extends StatelessWidget {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: _iconBackground,
+                  color: AppTheme.homeIconBackground,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: _iconBorder),
                 ),

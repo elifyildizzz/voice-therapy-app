@@ -180,7 +180,8 @@ class _VocalHygieneOnboardingScreenState
                           child: FilledButton(
                             onPressed: _canContinue ? _continue : null,
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppTheme.homeAccent,
+                              backgroundColor: AppTheme.homeIconBackground,
+                              foregroundColor: AppTheme.homeAccent,
                             ),
                             child: _isSubmitting
                                 ? const SizedBox(
@@ -188,7 +189,7 @@ class _VocalHygieneOnboardingScreenState
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.2,
-                                      color: Colors.white,
+                                      color: AppTheme.homeAccent,
                                     ),
                                   )
                                 : Text(

@@ -12,10 +12,11 @@ class AppTheme {
   static const Color headerEnd = Color(0xFF6F8F69);
   static const Color homeAccent = Color(0xFF4D6B57);
   static const Color homeCard = Color(0xFFDCE7D4);
+  static const Color homeIconBackground = Color(0xFFE6F0E6);
   static const Color terracotta = Color(0xFFD98371);
   static const Color sand = Color(0xFFE5DCCA);
   static const Color textPrimary = Color(0xFF1F2937);
-  static const Color textMuted = Color(0xFF6B7280);
+  static const Color textMuted = Color(0xFF374151);
   static const Color cardBorder = Color(0xFFE5E7EB);
   static const Color iconBg = soft;
   static const Color darkBlue = primary;

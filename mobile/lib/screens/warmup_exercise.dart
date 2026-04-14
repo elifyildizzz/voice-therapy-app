@@ -12,6 +12,7 @@ class WarmupExercise {
     this.videoCropTopFraction = 0,
     this.videoCropHeightFraction = 1,
     this.thumbnailAssetPath,
+    this.iconAssetPath,
     this.durationLabel,
     this.howToText,
   });
@@ -26,6 +27,7 @@ class WarmupExercise {
   final double videoCropTopFraction;
   final double videoCropHeightFraction;
   final String? thumbnailAssetPath;
+  final String? iconAssetPath;
   final String? durationLabel;
   final String? howToText;
 }

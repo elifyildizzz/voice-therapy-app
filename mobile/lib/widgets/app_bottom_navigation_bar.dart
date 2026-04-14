@@ -53,11 +53,9 @@ class AppBottomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isAuthenticated = AuthService.instance.currentUser != null;
     final items = isAuthenticated ? _authenticatedItems : _guestItems;
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Container(
-      padding:
-          EdgeInsets.fromLTRB(14, 12, 14, bottomInset > 4 ? bottomInset : 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
         color: AppTheme.card,
         border: const Border(top: BorderSide(color: AppTheme.cardBorder)),
@@ -96,12 +94,10 @@ class _BottomNavigationAction extends StatelessWidget {
       button: true,
       selected: isSelected,
       label: item.semanticLabel,
-      child: InkWell(
+      child: GestureDetector(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.soft : Colors.transparent,

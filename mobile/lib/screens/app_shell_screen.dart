@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
@@ -135,9 +137,18 @@ class _AppShellScreenState extends State<AppShellScreen> {
                 : _selectedIndex;
 
             return Scaffold(
-              body: IndexedStack(
-                index: safeIndex,
-                children: currentTabs,
+              body: AnnotatedRegion<SystemUiOverlayStyle>(
+                value: SystemUiOverlayStyle(
+                  statusBarColor: const Color(0xFFDCE7D4),
+                  statusBarIconBrightness: Brightness.dark,
+                  statusBarBrightness: Brightness.light,
+                  systemNavigationBarColor: AppTheme.card,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                ),
+                child: IndexedStack(
+                  index: safeIndex,
+                  children: currentTabs,
+                ),
               ),
               bottomNavigationBar: AppBottomNavigationBar(
                 currentIndex: safeIndex,

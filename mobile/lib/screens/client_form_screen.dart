@@ -96,70 +96,84 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
           children: [
             const AppTopHeader.withBack(title: 'Danışan Bilgi Formu'),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _ClientFormIntroCard(answeredCount: _answeredCount),
-                    const SizedBox(height: 14),
-                    const _ClientFormScaleLegend(),
-                    const SizedBox(height: 14),
-                    ...clientFormQuestions.map(
-                      (question) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _ClientFormQuestionCard(
-                          question: question,
-                          selectedValue: _responses[question.fieldKey],
-                          onSelect: (value) =>
-                              _selectAnswer(question.fieldKey, value),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed:
-                          _isFormComplete && !_isSaving ? _saveForm : null,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.darkBlue,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: const Color(0xFFB8C0CC),
-                        disabledForegroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        _isSaving ? 'Kaydediliyor...' : 'Kaydet ve Sonucu Gör',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _isFormComplete
-                          ? 'Tüm sorular yanıtlandı.'
-                          : '${clientFormQuestions.length} sorunun tamamını yanıtlayın.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF5F6E84),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (_savedRecord != null) ...[
-                      const SizedBox(height: 16),
-                      ClientFormRecordCard(
-                        title: 'Form Sonucu',
-                        record: _savedRecord!,
-                        showNote: true,
-                        showTime: true,
-                      ),
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFFF9FCF8),
+                      Color(0xFFF2F7F1),
                     ],
-                  ],
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _ClientFormIntroCard(answeredCount: _answeredCount),
+                      const SizedBox(height: 14),
+                      const _ClientFormScaleLegend(),
+                      const SizedBox(height: 14),
+                      ...clientFormQuestions.map(
+                        (question) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _ClientFormQuestionCard(
+                            question: question,
+                            selectedValue: _responses[question.fieldKey],
+                            onSelect: (value) =>
+                                _selectAnswer(question.fieldKey, value),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      FilledButton(
+                        onPressed:
+                            _isFormComplete && !_isSaving ? _saveForm : null,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.darkBlue,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: const Color(0xFFABC0B4),
+                          disabledForegroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          _isSaving
+                              ? 'Kaydediliyor...'
+                              : 'Kaydet ve Sonucu Gör',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _isFormComplete
+                            ? 'Tüm sorular yanıtlandı.'
+                            : '${clientFormQuestions.length} sorunun tamamını yanıtlayın.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF5F6E84),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (_savedRecord != null) ...[
+                        const SizedBox(height: 16),
+                        ClientFormRecordCard(
+                          title: 'Form Sonucu',
+                          record: _savedRecord!,
+                          showNote: true,
+                          showTime: true,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -182,9 +196,16 @@ class _ClientFormIntroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFC),
+        color: const Color(0xFFEAF3E6),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFD7E1E8)),
+        border: Border.all(color: const Color(0xFFD4E2CF)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x120F1B16),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +224,7 @@ class _ClientFormIntroCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               height: 1.4,
-              color: Color(0xFF536274),
+              color: Color(0xFF4E6258),
             ),
           ),
           const SizedBox(height: 12),
@@ -211,7 +232,7 @@ class _ClientFormIntroCard extends StatelessWidget {
             'İlerleme: $answeredCount/${clientFormQuestions.length}',
             style: const TextStyle(
               fontSize: 13,
-              color: Color(0xFF5F6E84),
+              color: AppTheme.homeAccent,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -229,9 +250,16 @@ class _ClientFormScaleLegend extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFCFEFC),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: const Color(0xFFD8E5D4)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x100F1B16),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,14 +282,14 @@ class _ClientFormScaleLegend extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
+                      color: const Color(0xFFEDF4EA),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '${option.value} = ${option.label}',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF475569),
+                        color: AppTheme.homeAccent,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -299,7 +327,14 @@ class _ClientFormQuestionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: const Color(0xFFDCE8D8)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x100F1B16),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,8 +344,8 @@ class _ClientFormQuestionCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 15,
               height: 1.45,
-              color: Color(0xFF1F2937),
-              fontWeight: FontWeight.w500,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 14),
@@ -330,9 +365,11 @@ class _ClientFormQuestionCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Seçilen: $selectedLabel',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF5F6E84),
+              color: selectedValue == null
+                  ? const Color(0xFF5F6E84)
+                  : AppTheme.homeAccent,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -360,26 +397,35 @@ class _ScaleChoice extends StatelessWidget {
       button: true,
       label: 'Yanıt $value',
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(999),
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          width: 52,
-          height: 44,
+          width: 50,
+          height: 42,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.darkBlue : const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(14),
+            color: isSelected ? AppTheme.darkBlue : const Color(0xFFEFF4EE),
+            borderRadius: BorderRadius.circular(999),
             border: Border.all(
-              color: isSelected ? AppTheme.darkBlue : const Color(0xFFD7DEE7),
+              color: isSelected ? AppTheme.darkBlue : const Color(0xFFD2DFCE),
             ),
+            boxShadow: isSelected
+                ? const [
+                    BoxShadow(
+                      color: Color(0x1A2F5D50),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ]
+                : const [],
           ),
           child: Text(
             value.toString(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: isSelected ? Colors.white : const Color(0xFF374151),
+              color: isSelected ? Colors.white : AppTheme.homeAccent,
             ),
           ),
         ),

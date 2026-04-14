@@ -6,7 +6,6 @@ import '../models/vocal_hygiene_question.dart';
 import '../models/vocal_hygiene_survey_response.dart';
 import '../services/vocal_hygiene_repository.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_top_header.dart';
 import 'vocal_hygiene_screen.dart';
 
 class VocalHygieneOnboardingScreen extends StatefulWidget {
@@ -113,53 +112,37 @@ class _VocalHygieneOnboardingScreenState
     final isLastQuestion = _currentIndex == _questions.length - 1;
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light.copyWith(
-          statusBarColor: Colors.transparent,
+        value: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: AppTheme.homeCard,
           systemNavigationBarColor: AppTheme.surface,
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(
-              title: 'Vokal Hijyenini Kişiselleştir',
+            _VocalHygieneSurveyHeader(
+              progress: progress,
+              currentQuestion: _currentIndex + 1,
+              totalQuestions: _questions.length,
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Soru ${_currentIndex + 1}/${_questions.length}',
+                      '${_currentIndex + 1}-) ${question.title}',
                       style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 8,
-                        backgroundColor: AppTheme.sand,
-                        color: AppTheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 26),
-                    Text(
-                      question.title,
-                      style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textPrimary,
-                        height: 1.16,
+                        height: 1.25,
                         letterSpacing: -0.2,
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 12),
                     Expanded(
                       child: ListView.separated(
+                        padding: EdgeInsets.zero,
                         itemCount: question.options.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
@@ -196,6 +179,9 @@ class _VocalHygieneOnboardingScreenState
                           flex: _currentIndex > 0 ? 2 : 1,
                           child: FilledButton(
                             onPressed: _canContinue ? _continue : null,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppTheme.homeAccent,
+                            ),
                             child: _isSubmitting
                                 ? const SizedBox(
                                     width: 20,
@@ -225,6 +211,102 @@ class _VocalHygieneOnboardingScreenState
   }
 }
 
+class _VocalHygieneSurveyHeader extends StatelessWidget {
+  const _VocalHygieneSurveyHeader({
+    required this.progress,
+    required this.currentQuestion,
+    required this.totalQuestions,
+  });
+
+  final double progress;
+  final int currentQuestion;
+  final int totalQuestions;
+
+  @override
+  Widget build(BuildContext context) {
+    final topInset = MediaQuery.paddingOf(context).top;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(20, topInset + 12, 20, 18),
+      decoration: const BoxDecoration(
+        color: AppTheme.homeCard,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x120F1B16),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).maybePop(),
+            behavior: HitTestBehavior.opaque,
+            child: const SizedBox(
+              width: 36,
+              height: 36,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppTheme.homeAccent,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Vokal Hijyenini Kişiselleştir',
+            style: TextStyle(
+              color: AppTheme.homeAccent,
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+              height: 1.15,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Kısa bir değerlendirme ile sana özel öneriler hazırlayacağız.',
+            style: TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 13,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Text(
+                'Soru $currentQuestion/$totalQuestions',
+                style: const TextStyle(
+                  color: AppTheme.homeAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: Colors.white.withValues(alpha: 0.72),
+              color: AppTheme.homeAccent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _OptionCard extends StatelessWidget {
   const _OptionCard({
     required this.label,
@@ -246,12 +328,12 @@ class _OptionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.soft : AppTheme.card,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
+              color: isSelected ? AppTheme.homeAccent : AppTheme.cardBorder,
               width: isSelected ? 1.5 : 1,
             ),
             boxShadow: isSelected ? null : AppTheme.softShadow,
@@ -266,7 +348,7 @@ class _OptionCard extends StatelessWidget {
                     : (isSelected
                         ? Icons.radio_button_checked_rounded
                         : Icons.radio_button_unchecked_rounded),
-                color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
+                color: isSelected ? AppTheme.homeAccent : AppTheme.cardBorder,
                 size: 26,
               ),
               const SizedBox(width: 14),
@@ -274,7 +356,7 @@ class _OptionCard extends StatelessWidget {
                 child: Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w500,
                     color: AppTheme.textPrimary,
                   ),

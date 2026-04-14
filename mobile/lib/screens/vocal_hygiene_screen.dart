@@ -211,7 +211,10 @@ class _VocalHygieneScreenState extends State<VocalHygieneScreen> {
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(title: 'Vokal Hijyen'),
+            const AppTopHeader.withBack(
+              title: 'Vokal Hijyen',
+              showDivider: true,
+            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(0, 16, 0, 24),

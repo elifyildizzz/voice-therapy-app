@@ -218,7 +218,10 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(title: 'Nefes Kontrolü'),
+            const AppTopHeader.withBack(
+              title: 'Nefes Kontrolü',
+              showDivider: true,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),

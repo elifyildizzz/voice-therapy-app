@@ -392,7 +392,10 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(title: 'Ses Sağlığı Ön Tarama Testi'),
+            const AppTopHeader.withBack(
+              title: 'Ses Sağlığı Ön Tarama Testi',
+              showDivider: true,
+            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
@@ -462,7 +465,7 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                           height: 92,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: AppTheme.surface,
+                            color: AppTheme.card,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: AppTheme.cardBorder),
                           ),
@@ -486,18 +489,12 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                           ),
                         ),
                         const SizedBox(height: 18),
-                        const Icon(
-                          Icons.graphic_eq_rounded,
-                          size: 72,
-                          color: AppTheme.primary,
-                        ),
-                        const SizedBox(height: 12),
                         GestureDetector(
                           onTap: canRecord ? _onMicPressed : null,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 240),
-                            width: 122,
-                            height: 122,
+                            width: 96,
+                            height: 96,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _isSending
@@ -521,7 +518,7 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                               _isRecording
                                   ? Icons.stop_rounded
                                   : Icons.mic_none_rounded,
-                              size: 58,
+                              size: 44,
                               color: Colors.white,
                             ),
                           ),

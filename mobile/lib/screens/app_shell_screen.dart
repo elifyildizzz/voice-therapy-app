@@ -138,8 +138,8 @@ class _AppShellScreenState extends State<AppShellScreen> {
 
             return Scaffold(
               body: AnnotatedRegion<SystemUiOverlayStyle>(
-                value: SystemUiOverlayStyle(
-                  statusBarColor: const Color(0xFFDCE7D4),
+                value: const SystemUiOverlayStyle(
+                  statusBarColor: Color(0xFFDCE7D4),
                   statusBarIconBrightness: Brightness.dark,
                   statusBarBrightness: Brightness.light,
                   systemNavigationBarColor: AppTheme.card,

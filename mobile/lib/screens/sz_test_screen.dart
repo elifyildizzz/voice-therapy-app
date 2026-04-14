@@ -74,6 +74,7 @@ class _SzTestScreenState extends State<SzTestScreen> {
               width: 2,
             ),
           ),
+          backgroundColor: AppTheme.card,
           title: const Text(
             'S/Z Testi',
             style: TextStyle(
@@ -291,7 +292,10 @@ class _SzTestScreenState extends State<SzTestScreen> {
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(title: 'S/Z Oranı Testi'),
+            const AppTopHeader.withBack(
+              title: 'S/Z Oranı Testi',
+              showDivider: true,
+            ),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -453,9 +457,9 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFC),
+        color: AppTheme.card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFD7E1E8)),
+        border: Border.all(color: AppTheme.cardBorder),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -465,7 +469,7 @@ class _InfoCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppTheme.darkBlue,
+              color: AppTheme.textPrimary,
             ),
           ),
           SizedBox(height: 10),
@@ -624,12 +628,17 @@ class _ActiveStepCard extends StatelessWidget {
             onTap: isSaving ? null : onPrimaryPressed,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: 116,
-              height: 116,
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color:
-                    isRecording ? const Color(0xFFCF5A5A) : AppTheme.darkBlue,
+                color: isRecording ? const Color(0xFFCF5A5A) : AppTheme.card,
+                border: Border.all(
+                  color: isRecording
+                      ? const Color(0xFFCF5A5A)
+                      : AppTheme.homeAccent,
+                  width: 2,
+                ),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x24163B55),
@@ -640,8 +649,8 @@ class _ActiveStepCard extends StatelessWidget {
               ),
               child: Icon(
                 isRecording ? Icons.stop_rounded : Icons.mic_none_rounded,
-                color: Colors.white,
-                size: 54,
+                color: isRecording ? Colors.white : AppTheme.homeAccent,
+                size: 44,
               ),
             ),
           ),
@@ -655,7 +664,7 @@ class _ActiveStepCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppTheme.darkBlue,
+              color: AppTheme.textPrimary,
             ),
           ),
         ],
@@ -692,7 +701,7 @@ class _AttemptsCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppTheme.darkBlue,
+              color: AppTheme.textPrimary,
             ),
           ),
           const SizedBox(height: 12),

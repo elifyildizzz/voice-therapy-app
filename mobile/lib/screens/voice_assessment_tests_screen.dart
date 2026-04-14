@@ -20,7 +20,10 @@ class VoiceAssessmentTestsScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(title: 'Ses Değerlendirme Testleri'),
+            const AppTopHeader.withBack(
+              title: 'Ses Değerlendirme Testleri',
+              showDivider: true,
+            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
@@ -59,8 +62,6 @@ class VoiceAssessmentTestsScreen extends StatelessWidget {
 }
 
 class _AssessmentModuleCard extends StatelessWidget {
-  static const Color _tileBackground = Color(0xFFF5FAF4);
-  static const Color _tileBorder = Color(0xFFD5E2D1);
   static const Color _iconBackground = Color(0xFFE6F0E6);
   static const Color _chevronColor = Color(0xFF8DA292);
 
@@ -77,7 +78,7 @@ class _AssessmentModuleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: _tileBackground,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -85,9 +86,10 @@ class _AssessmentModuleCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
-            color: _tileBackground,
+            color: AppTheme.card,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _tileBorder),
+            border: Border.all(color: AppTheme.cardBorder),
+            boxShadow: AppTheme.softShadow,
           ),
           child: Row(
             children: [

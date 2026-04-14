@@ -90,6 +90,8 @@ class _BottomNavigationAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const selectedColor = AppTheme.homeAccent;
+
     return Semantics(
       button: true,
       selected: isSelected,
@@ -100,7 +102,7 @@ class _BottomNavigationAction extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.soft : Colors.transparent,
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
@@ -109,7 +111,7 @@ class _BottomNavigationAction extends StatelessWidget {
               Icon(
                 isSelected ? item.activeIcon : item.icon,
                 size: 24,
-                color: isSelected ? AppTheme.primary : AppTheme.textMuted,
+                color: isSelected ? selectedColor : AppTheme.textMuted,
               ),
               const SizedBox(height: 4),
               Text(
@@ -120,7 +122,7 @@ class _BottomNavigationAction extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? AppTheme.primary : AppTheme.textMuted,
+                  color: isSelected ? selectedColor : AppTheme.textMuted,
                 ),
               ),
             ],

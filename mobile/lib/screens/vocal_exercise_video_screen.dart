@@ -268,7 +268,7 @@ class _VocalExerciseVideoScreenState extends State<VocalExerciseVideoScreen> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 28),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: _LivePitchSection(
@@ -302,8 +302,13 @@ class _PlainVideoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
 
-    return Padding(
+    return Container(
       padding: EdgeInsets.fromLTRB(16, topInset + 8, 20, 6),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppTheme.cardBorder),
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -449,49 +454,27 @@ class _TherapistVideoPlayer extends StatelessWidget {
                       ),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 32, 14, 12),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                      padding: const EdgeInsets.fromLTRB(14, 42, 14, 12),
+                      child: Row(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(999),
-                            child: VideoProgressIndicator(
-                              controller!,
-                              allowScrubbing: true,
-                              padding: EdgeInsets.zero,
-                              colors: VideoProgressColors(
-                                playedColor:
-                                    Colors.white.withValues(alpha: 0.9),
-                                bufferedColor:
-                                    Colors.white.withValues(alpha: 0.45),
-                                backgroundColor:
-                                    Colors.white.withValues(alpha: 0.28),
-                              ),
+                          Text(
+                            _formatVideoDuration(videoPosition),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Text(
-                                _formatVideoDuration(videoPosition),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                _formatVideoDuration(
-                                  videoDuration ?? Duration.zero,
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                          const Spacer(),
+                          Text(
+                            _formatVideoDuration(
+                              videoDuration ?? Duration.zero,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
@@ -603,6 +586,12 @@ class _HowToSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = text
+        .split(RegExp(r'(?<=[.!?])\s+'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -615,14 +604,34 @@ class _HowToSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 16,
-            color: AppTheme.textMuted,
-            height: 1.55,
+        for (final item in items)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Icon(
+                    Icons.circle,
+                    size: 7,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppTheme.textMuted,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }
@@ -668,7 +677,7 @@ class _LivePitchSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 20),
         LivePitchChart(points: points),
         const SizedBox(height: 14),
         Row(

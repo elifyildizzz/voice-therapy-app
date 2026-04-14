@@ -113,8 +113,13 @@ class _PlainPageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
 
-    return Padding(
+    return Container(
       padding: EdgeInsets.fromLTRB(16, topInset + 8, 20, 6),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppTheme.cardBorder),
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -131,10 +136,10 @@ class _PlainPageHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Vokal Fonksiyon Egzersizleri',
-              style: TextStyle(
+              title,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.3,

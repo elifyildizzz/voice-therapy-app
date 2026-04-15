@@ -8,6 +8,11 @@ import 'package:record/record.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
 
+enum _BreathControlStep {
+  diaphragm,
+  recording,
+}
+
 class BreathControlScreen extends StatefulWidget {
   const BreathControlScreen({super.key});
 
@@ -26,6 +31,7 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
   bool _stopAfterStart = false;
   double _elapsedSeconds = 0;
   double _bestSeconds = 0;
+  _BreathControlStep _currentStep = _BreathControlStep.diaphragm;
   final List<_PhonationAttempt> _attempts = <_PhonationAttempt>[];
 
   Future<void> _startRecording() async {
@@ -165,12 +171,37 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
     }
   }
 
-  void _resetSession() {
+  void _goToRecordingStep() {
     setState(() {
-      _elapsedSeconds = 0;
-      _bestSeconds = 0;
-      _attempts.clear();
+      _currentStep = _BreathControlStep.recording;
     });
+  }
+
+  Future<void> _goToDiaphragmStep() async {
+    if (_isStarting || _isStopping) {
+      _showMessage('Kayıt işlemi tamamlanınca geri dönebilirsin.');
+      return;
+    }
+
+    if (_isRecording) {
+      await _stopRecording();
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _currentStep = _BreathControlStep.diaphragm;
+    });
+  }
+
+  void _handleHeaderBack() {
+    if (_currentStep == _BreathControlStep.recording) {
+      unawaited(_goToDiaphragmStep());
+      return;
+    }
+    Navigator.of(context).maybePop();
   }
 
   void _showMessage(String message) {
@@ -199,8 +230,9 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
     final statusText = _isStarting
         ? 'Kayıt hazırlanıyor...'
         : _isRecording
-            ? 'Sesinizi rahatça sürdürün, zorlanınca bırakın.'
-            : 'Hazır olduğunuzda butona basılı tutun.';
+            ? 'Rahat tonda /a/ sesini sürdür, zorlanınca bırak.'
+            : 'Hazır olduğunda butona basılı tut ve /a/ sesini uzat.';
+    final lastSeconds = _attempts.isNotEmpty ? _attempts.last.seconds : 0.0;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -211,9 +243,10 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(
+            AppTopHeader.withBack(
               title: 'Nefes Kontrolü',
               showDivider: true,
+              onBackPressed: _handleHeaderBack,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -221,26 +254,32 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const _DiaphragmIntroCard(),
-                    const SizedBox(height: 14),
-                    const _InstructionCard(),
-                    const SizedBox(height: 14),
-                    _RecordingCard(
-                      elapsedSeconds: _elapsedSeconds,
-                      bestSeconds: _bestSeconds,
-                      statusText: statusText,
-                      isStarting: _isStarting,
-                      isRecording: _isRecording,
-                      isStopping: _isStopping,
-                      onPressStart: _startRecording,
-                      onPressEnd: _stopRecording,
-                    ),
-                    const SizedBox(height: 14),
-                    _AttemptsCard(
-                      attempts: _attempts,
-                      bestSeconds: _bestSeconds,
-                      onReset: _attempts.isEmpty ? null : _resetSession,
-                    ),
+                    if (_currentStep == _BreathControlStep.diaphragm) ...[
+                      const _DiaphragmIntroCard(),
+                      const SizedBox(height: 14),
+                      const _DiaphragmGuideCard(),
+                      const SizedBox(height: 20),
+                      FilledButton(
+                        onPressed: _goToRecordingStep,
+                        child: const Text('Kayıt aşamasına geç'),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 14),
+                      _RecordingCard(
+                        elapsedSeconds: _elapsedSeconds,
+                        statusText: statusText,
+                        isStarting: _isStarting,
+                        isRecording: _isRecording,
+                        isStopping: _isStopping,
+                        onPressStart: _startRecording,
+                        onPressEnd: _stopRecording,
+                      ),
+                      const SizedBox(height: 14),
+                      _RecordingSummaryCard(
+                        bestSeconds: _bestSeconds,
+                        lastSeconds: lastSeconds,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -303,37 +342,30 @@ class _DiaphragmIntroCard extends StatelessWidget {
   }
 }
 
-class _InstructionCard extends StatelessWidget {
-  const _InstructionCard();
+class _DiaphragmGuideCard extends StatelessWidget {
+  const _DiaphragmGuideCard();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFC),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFD7E1E8)),
+        color: AppTheme.card.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.cardBorder.withValues(alpha: 0.65),
+        ),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Maksimum /a/ fonasyonu kaydı',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primary,
-            ),
-          ),
+          _GuideHeader(),
           SizedBox(height: 12),
-          Text(
-            "Dik oturun ve omuzlarınızı serbest bırakın. Karnınızın bir balon gibi şiştiğini hissederek derin bir diyafram nefesi alın. Hazır olduğunda butona bas ve '/a/' sesini en rahat tonda, kesintisiz olarak uzatabildiğin kadar uzat. Kendinizi zorlamayın; sesinizde titreme veya yorulma hissettiğiniz an butonu bırakın.",
-            style: TextStyle(
-              fontSize: 15,
-              height: 1.5,
-              color: Color(0xFF344254),
-            ),
+          _GuideBullet(text: 'Omuzlarını kaldırma'),
+          SizedBox(height: 10),
+          _GuideBullet(
+            text:
+                'Burnundan yavaşça derin nefes al, karnının yumuşakça genişlemesine izin ver. Nefesi verirken karnının içeri dönmesine izin ver.',
           ),
         ],
       ),
@@ -341,10 +373,77 @@ class _InstructionCard extends StatelessWidget {
   }
 }
 
+class _GuideHeader extends StatelessWidget {
+  const _GuideHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Icon(
+          Icons.check_circle_rounded,
+          color: AppTheme.primary,
+          size: 24,
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Karın nefesi kullan',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GuideBullet extends StatelessWidget {
+  const _GuideBullet({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: AppTheme.primary,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.45,
+              color: AppTheme.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _RecordingCard extends StatelessWidget {
   const _RecordingCard({
     required this.elapsedSeconds,
-    required this.bestSeconds,
     required this.statusText,
     required this.isStarting,
     required this.isRecording,
@@ -354,7 +453,6 @@ class _RecordingCard extends StatelessWidget {
   });
 
   final double elapsedSeconds;
-  final double bestSeconds;
   final String statusText;
   final bool isStarting;
   final bool isRecording;
@@ -365,8 +463,7 @@ class _RecordingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canPress = !isStopping;
-    final currentLabel =
-        isRecording ? _formatSeconds(elapsedSeconds) : _formatSeconds(0);
+    final currentLabel = _formatSeconds(elapsedSeconds);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -382,7 +479,7 @@ class _RecordingCard extends StatelessWidget {
             '/a/',
             style: TextStyle(
               fontSize: 34,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppTheme.primary,
               height: 1,
             ),
@@ -398,25 +495,17 @@ class _RecordingCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(
-                  label: 'Anlık süre',
-                  value: currentLabel,
-                ),
+          if (isRecording || elapsedSeconds > 0) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Anlık süre: $currentLabel',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primary,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _MetricTile(
-                  label: 'Maksimum',
-                  value: _formatSeconds(bestSeconds),
-                  highlight: true,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
           const SizedBox(height: 20),
           GestureDetector(
             onTapDown: canPress ? (_) => onPressStart() : null,
@@ -469,42 +558,42 @@ class _RecordingCard extends StatelessWidget {
   }
 }
 
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.label,
-    required this.value,
-    this.highlight = false,
+class _RecordingSummaryCard extends StatelessWidget {
+  const _RecordingSummaryCard({
+    required this.bestSeconds,
+    required this.lastSeconds,
   });
 
-  final String label;
-  final String value;
-  final bool highlight;
+  final double bestSeconds;
+  final double lastSeconds;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: highlight ? AppTheme.soft : const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: AppTheme.softShadow,
       ),
-      child: Column(
+      child: Row(
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: highlight ? AppTheme.primary : AppTheme.textMuted,
+          Expanded(
+            child: _SummaryMetric(
+              label: 'En iyi:',
+              value: _formatSeconds(bestSeconds),
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: highlight ? AppTheme.primary : AppTheme.textPrimary,
+          Container(
+            width: 1,
+            height: 44,
+            color: AppTheme.cardBorder,
+          ),
+          Expanded(
+            child: _SummaryMetric(
+              label: 'Son:',
+              value: _formatSeconds(lastSeconds),
             ),
           ),
         ],
@@ -513,83 +602,37 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
-class _AttemptsCard extends StatelessWidget {
-  const _AttemptsCard({
-    required this.attempts,
-    required this.bestSeconds,
-    required this.onReset,
+class _SummaryMetric extends StatelessWidget {
+  const _SummaryMetric({
+    required this.label,
+    required this.value,
   });
 
-  final List<_PhonationAttempt> attempts;
-  final double bestSeconds;
-  final VoidCallback? onReset;
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    final lastSeconds = attempts.isNotEmpty ? attempts.last.seconds : 0.0;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Kayıt sonucu',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ),
-              if (onReset != null)
-                TextButton(
-                  onPressed: onReset,
-                  child: const Text('Sıfırla'),
-                ),
-            ],
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textMuted,
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(
-                  label: 'En iyi',
-                  value: _formatSeconds(bestSeconds),
-                  highlight: true,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _MetricTile(
-                  label: 'En son',
-                  value: _formatSeconds(lastSeconds),
-                ),
-              ),
-            ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.primary,
           ),
-          if (attempts.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 10),
-              child: Text(
-                'Henüz deneme yok.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.textMuted,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

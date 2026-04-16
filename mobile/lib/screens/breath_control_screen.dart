@@ -296,31 +296,22 @@ class _DiaphragmIntroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          height: 220,
-          child: CustomPaint(
-            painter: _DiaphragmPainter(),
-            child: Center(
-              child: Padding(
-                padding: EdgeInsets.only(top: 98),
-                child: Text(
-                  'Karın bir balon gibi genişler',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ),
+          height: 280,
+          child: Center(
+            child: Image.asset(
+              'assets/branding/diyafram_nefesi.png',
+              width: 320,
+              height: 300,
+              fit: BoxFit.contain,
             ),
           ),
         ),
-        SizedBox(height: 10),
-        Text(
+        const SizedBox(height: 10),
+        const Text(
           'Diyafram nefesi',
           style: TextStyle(
             fontSize: 16,
@@ -328,13 +319,13 @@ class _DiaphragmIntroCard extends StatelessWidget {
             color: AppTheme.textPrimary,
           ),
         ),
-        SizedBox(height: 6),
-        Text(
+        const SizedBox(height: 6),
+        const Text(
           'Nefes alırken göğüs yerine karın bölgenizin yumuşakça genişlemesine izin verin. Nefesi verirken karın içeri döner ve sesinizi bu destekle taşırsınız.',
           style: TextStyle(
             fontSize: 14,
             height: 1.4,
-            color: AppTheme.textMuted,
+            color: Colors.black,
           ),
         ),
       ],
@@ -643,107 +634,6 @@ class _PhonationAttempt {
   });
 
   final double seconds;
-}
-
-class _DiaphragmPainter extends CustomPainter {
-  const _DiaphragmPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centerX = size.width / 2;
-    final skinPaint = Paint()..color = const Color(0xFFEAF1EC);
-    final outlinePaint = Paint()
-      ..color = AppTheme.primary.withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    final lungPaint = Paint()..color = const Color(0xFFCFE2D6);
-    final bellyPaint = Paint()..color = const Color(0xFFF2D8CE);
-    final diaphragmPaint = Paint()
-      ..color = AppTheme.terracotta
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-    final arrowPaint = Paint()
-      ..color = AppTheme.primary
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-
-    final torsoPath = Path()
-      ..moveTo(centerX - 54, 28)
-      ..quadraticBezierTo(centerX - 88, 82, centerX - 72, 170)
-      ..quadraticBezierTo(centerX, 206, centerX + 72, 170)
-      ..quadraticBezierTo(centerX + 88, 82, centerX + 54, 28)
-      ..close();
-
-    canvas.drawPath(torsoPath, skinPaint);
-    canvas.drawPath(torsoPath, outlinePaint);
-
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(centerX - 24, 82),
-        width: 40,
-        height: 72,
-      ),
-      lungPaint,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(centerX + 24, 82),
-        width: 40,
-        height: 72,
-      ),
-      lungPaint,
-    );
-
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(centerX, 150),
-        width: 118,
-        height: 72,
-      ),
-      bellyPaint,
-    );
-
-    final diaphragmPath = Path()
-      ..moveTo(centerX - 62, 118)
-      ..quadraticBezierTo(centerX, 148, centerX + 62, 118);
-    canvas.drawPath(diaphragmPath, diaphragmPaint);
-
-    final arrowPath = Path()
-      ..moveTo(centerX - 104, 76)
-      ..lineTo(centerX - 104, 136)
-      ..moveTo(centerX - 116, 124)
-      ..lineTo(centerX - 104, 138)
-      ..lineTo(centerX - 92, 124)
-      ..moveTo(centerX + 104, 76)
-      ..lineTo(centerX + 104, 136)
-      ..moveTo(centerX + 92, 124)
-      ..lineTo(centerX + 104, 138)
-      ..lineTo(centerX + 116, 124);
-    canvas.drawPath(arrowPath, arrowPaint);
-
-    final textPainter = TextPainter(
-      text: const TextSpan(
-        text: 'Diyafram',
-        style: TextStyle(
-          color: AppTheme.terracotta,
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    textPainter.paint(
-      canvas,
-      Offset(centerX - textPainter.width / 2, 108),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 String _formatSeconds(double seconds) => '${seconds.toStringAsFixed(1)} sn';

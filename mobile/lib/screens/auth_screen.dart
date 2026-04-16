@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
+const Color _authButtonColor = Color(0xFF4C766A);
+
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
@@ -25,6 +27,15 @@ class _AuthScreenState extends State<AuthScreen> {
 
   bool _isLoginMode = true;
   bool _isSubmitting = false;
+
+  void _switchMode(bool loginMode) {
+    if (_isSubmitting || _isLoginMode == loginMode) {
+      return;
+    }
+    setState(() {
+      _isLoginMode = loginMode;
+    });
+  }
 
   @override
   void dispose() {
@@ -203,47 +214,41 @@ class _AuthScreenState extends State<AuthScreen> {
                         children: [
                           _ModeSwitcher(
                             isLoginMode: _isLoginMode,
-                            onSelectLogin: () {
-                              setState(() {
-                                _isLoginMode = true;
-                              });
-                            },
-                            onSelectRegister: () {
-                              setState(() {
-                                _isLoginMode = false;
-                              });
-                            },
+                            onSelectLogin: () => _switchMode(true),
+                            onSelectRegister: () => _switchMode(false),
                           ),
                           const SizedBox(height: 22),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
-                            child: _isLoginMode
-                                ? _LoginForm(
-                                    key: const ValueKey<String>('login'),
-                                    formKey: _loginFormKey,
-                                    emailController: _loginEmailController,
-                                    passwordController:
-                                        _loginPasswordController,
-                                    isSubmitting: _isSubmitting,
-                                    validateEmail: _validateEmail,
-                                    validatePassword: _validatePassword,
-                                    onSubmit: _submitLogin,
-                                  )
-                                : _RegisterForm(
-                                    key: const ValueKey<String>('register'),
-                                    formKey: _registerFormKey,
-                                    emailController: _registerEmailController,
-                                    passwordController:
-                                        _registerPasswordController,
-                                    passwordAgainController:
-                                        _registerPasswordAgainController,
-                                    firstNameController: _firstNameController,
-                                    lastNameController: _lastNameController,
-                                    isSubmitting: _isSubmitting,
-                                    validateEmail: _validateEmail,
-                                    validatePassword: _validatePassword,
-                                    onSubmit: _submitRegister,
-                                  ),
+                          Visibility(
+                            visible: _isLoginMode,
+                            maintainState: true,
+                            child: _LoginForm(
+                              key: const ValueKey<String>('login'),
+                              formKey: _loginFormKey,
+                              emailController: _loginEmailController,
+                              passwordController: _loginPasswordController,
+                              isSubmitting: _isSubmitting,
+                              validateEmail: _validateEmail,
+                              validatePassword: _validatePassword,
+                              onSubmit: _submitLogin,
+                            ),
+                          ),
+                          Visibility(
+                            visible: !_isLoginMode,
+                            maintainState: true,
+                            child: _RegisterForm(
+                              key: const ValueKey<String>('register'),
+                              formKey: _registerFormKey,
+                              emailController: _registerEmailController,
+                              passwordController: _registerPasswordController,
+                              passwordAgainController:
+                                  _registerPasswordAgainController,
+                              firstNameController: _firstNameController,
+                              lastNameController: _lastNameController,
+                              isSubmitting: _isSubmitting,
+                              validateEmail: _validateEmail,
+                              validatePassword: _validatePassword,
+                              onSubmit: _submitRegister,
+                            ),
                           ),
                         ],
                       ),
@@ -266,45 +271,14 @@ class _AuthIntro extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 74,
-          height: 74,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.primary,
-                AppTheme.light,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: AppTheme.softShadow,
-          ),
-          child: const Icon(
-            Icons.favorite_border_rounded,
-            color: Colors.white,
-            size: 34,
-          ),
-        ),
-        const SizedBox(height: 18),
         const Text(
-          'Ses Terapisi',
+          'Akıllı Ses Terapisi',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.w800,
+            fontSize: 23,
+            fontWeight: FontWeight.w700,
             color: AppTheme.textPrimary,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Sesinize özen gösterin',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            color: AppTheme.textMuted,
+            letterSpacing: -0.2,
           ),
         ),
       ],
@@ -329,7 +303,7 @@ class _ModeSwitcher extends StatelessWidget {
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: AppTheme.soft,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
@@ -401,6 +375,13 @@ class _LoginForm extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: _authButtonColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
             onPressed: isSubmitting ? null : onSubmit,
             child: Text(isSubmitting ? 'Giriş yapılıyor...' : 'Giriş Yap'),
           ),
@@ -507,6 +488,13 @@ class _RegisterForm extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: _authButtonColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
             onPressed: isSubmitting ? null : onSubmit,
             child: Text(
               isSubmitting ? 'Kayıt oluşturuluyor...' : 'Kayıt Ol',
@@ -592,10 +580,10 @@ class _ModeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isSelected ? AppTheme.primary : Colors.transparent,
-      borderRadius: BorderRadius.circular(999),
+      color: isSelected ? _authButtonColor : Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -603,7 +591,7 @@ class _ModeButton extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? Colors.white : AppTheme.primary,
+              color: isSelected ? Colors.white : _authButtonColor,
               fontSize: 15,
               fontWeight: FontWeight.w700,
             ),

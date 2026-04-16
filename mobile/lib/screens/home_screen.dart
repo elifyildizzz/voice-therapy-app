@@ -31,7 +31,15 @@ class HomeScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
           ),
           backgroundColor: AppTheme.card,
-          title: Text(title),
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+              height: 1.2,
+            ),
+          ),
           content: Text(message),
           actions: [
             TextButton(
@@ -39,6 +47,17 @@ class HomeScreen extends StatelessWidget {
               child: const Text('Vazgeç'),
             ),
             FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.homeIconBackground,
+                foregroundColor: AppTheme.homeAccent,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 15,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
                 Navigator.of(context).push(

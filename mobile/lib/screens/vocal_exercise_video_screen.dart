@@ -718,8 +718,9 @@ class _LivePitchSection extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: isBusy ? null : onToggle,
                 style: FilledButton.styleFrom(
-                  backgroundColor:
-                      isListening ? AppTheme.terracotta : AppTheme.primary,
+                  backgroundColor: isListening
+                      ? AppTheme.terracotta
+                      : AppTheme.buttonPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 13,

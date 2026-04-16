@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../models/client_form_record.dart';
-import '../models/app_user.dart';
 import '../models/sz_test_record.dart';
 import '../services/auth_service.dart';
 import '../services/client_form_repository.dart';
 import '../services/sz_test_repository.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_formatters.dart';
+import 'settings_screen.dart';
 import 'sz_test_screen.dart';
 
 const Color _profileAccentGreen = AppTheme.homeAccent;
+const Color _profileTabAccentGreen = AppTheme.buttonPrimary;
 const Color _profileSoftGreen = Color(0xFFF0F5E9);
-const Color _profileGreenBorder = Color(0xFFCCD9C4);
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -82,8 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _ProfileHeaderCard(
                       fullName: fullName,
                       lastSessionDate: _buildLastSessionLabel(data),
-                      onEditPressed:
-                          user == null ? null : () => _openProfileEditor(user),
+                      onEditPressed: user == null ? null : _openSettings,
                     ),
                     const SizedBox(height: 18),
                     _ProfileTabs(
@@ -102,6 +101,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const SettingsScreen(),
       ),
     );
   }
@@ -381,247 +388,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     };
     return monthLabels[month] ?? month.toString();
   }
-
-  Future<void> _openProfileEditor(AppUser user) async {
-    final result = await showModalBottomSheet<_ProfileEditorResult>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => _ProfileEditorSheet(user: user),
-    );
-
-    if (!mounted || result == null) {
-      return;
-    }
-
-    switch (result) {
-      case _ProfileEditorSuccess():
-        _showSnackBar(
-          'Profil bilgileri güncellendi.',
-          const Color(0xFF1F7A45),
-        );
-      case _ProfileEditorError(:final message):
-        _showSnackBar(message, const Color(0xFFB42318));
-      case _ProfileEditorSignedOut():
-        await AuthService.instance.signOut();
-    }
-  }
-
-  void _showSnackBar(String message, Color textColor) {
-    if (!mounted) {
-      return;
-    }
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.white,
-        content: Text(
-          message,
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-sealed class _ProfileEditorResult {
-  const _ProfileEditorResult();
-}
-
-class _ProfileEditorSuccess extends _ProfileEditorResult {
-  const _ProfileEditorSuccess();
-}
-
-class _ProfileEditorSignedOut extends _ProfileEditorResult {
-  const _ProfileEditorSignedOut();
-}
-
-class _ProfileEditorError extends _ProfileEditorResult {
-  const _ProfileEditorError(this.message);
-
-  final String message;
-}
-
-class _ProfileEditorSheet extends StatefulWidget {
-  const _ProfileEditorSheet({
-    required this.user,
-  });
-
-  final AppUser user;
-
-  @override
-  State<_ProfileEditorSheet> createState() => _ProfileEditorSheetState();
-}
-
-class _ProfileEditorSheetState extends State<_ProfileEditorSheet> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _firstNameController;
-  late final TextEditingController _lastNameController;
-  late final TextEditingController _emailController;
-
-  bool _isSubmitting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _firstNameController = TextEditingController(text: widget.user.firstName);
-    _lastNameController = TextEditingController(text: widget.user.lastName);
-    _emailController = TextEditingController(text: widget.user.email);
-  }
-
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final form = _formKey.currentState;
-    if (form == null || !form.validate() || _isSubmitting) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    try {
-      await AuthService.instance.updateCurrentUserProfile(
-        firstName: _firstNameController.text,
-        lastName: _lastNameController.text,
-        email: _emailController.text,
-      );
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context).pop(const _ProfileEditorSuccess());
-    } on AuthException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context).pop(_ProfileEditorError(error.message));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
-    }
-  }
-
-  void _signOut() {
-    if (_isSubmitting) {
-      return;
-    }
-    Navigator.of(context).pop(const _ProfileEditorSignedOut());
-  }
-
-  String? _validateRequired(String? value, String fieldLabel) {
-    if ((value ?? '').trim().isEmpty) {
-      return '$fieldLabel alanı boş bırakılamaz.';
-    }
-    return null;
-  }
-
-  String? _validateEmail(String? value) {
-    final text = (value ?? '').trim();
-    if (text.isEmpty) {
-      return 'E-posta alanı zorunludur.';
-    }
-    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    if (!emailRegex.hasMatch(text)) {
-      return 'Geçerli bir e-posta adresi girin.';
-    }
-    return null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Profili Düzenle',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.darkBlue,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _firstNameController,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Ad',
-                    ),
-                    validator: (value) => _validateRequired(value, 'Ad'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _lastNameController,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Soyad',
-                    ),
-                    validator: (value) => _validateRequired(value, 'Soyad'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.done,
-                    decoration: const InputDecoration(
-                      labelText: 'E-posta',
-                    ),
-                    validator: _validateEmail,
-                    onFieldSubmitted: (_) => _submit(),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            FilledButton(
-              onPressed: _isSubmitting ? null : _submit,
-              child: Text(_isSubmitting ? 'Kaydediliyor...' : 'Kaydet'),
-            ),
-            const SizedBox(height: 10),
-            TextButton.icon(
-              onPressed: _isSubmitting ? null : _signOut,
-              icon: const Icon(Icons.logout_rounded),
-              label: const Text('Çıkış Yap'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF7A1B1B),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _ProfileData {
@@ -658,16 +424,9 @@ class _ProfileHeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.homeCard,
-            Color(0xFFCFE0C8),
-          ],
-        ),
+        color: AppTheme.card,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _profileGreenBorder),
+        border: Border.all(color: AppTheme.cardBorder),
         boxShadow: AppTheme.softShadow,
       ),
       child: Row(
@@ -676,11 +435,18 @@ class _ProfileHeaderCard extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: _profileAccentGreen.withValues(alpha: 0.18),
+              color: Colors.white,
               shape: BoxShape.circle,
               border: Border.all(
-                color: _profileAccentGreen.withValues(alpha: 0.12),
+                color: AppTheme.cardBorder,
               ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0F111827),
+                  blurRadius: 12,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
             alignment: Alignment.center,
             child: Text(
@@ -688,7 +454,7 @@ class _ProfileHeaderCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: _profileAccentGreen,
+                color: AppTheme.textPrimary,
               ),
             ),
           ),
@@ -702,7 +468,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: _profileAccentGreen,
+                    color: AppTheme.textPrimary,
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -721,8 +487,8 @@ class _ProfileHeaderCard extends StatelessWidget {
             onPressed: onEditPressed,
             splashRadius: 22,
             icon: const Icon(
-              Icons.edit_outlined,
-              color: _profileAccentGreen,
+              Icons.settings_outlined,
+              color: AppTheme.textPrimary,
             ),
           ),
         ],
@@ -792,7 +558,7 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isActive ? _profileAccentGreen : Colors.transparent,
+      color: isActive ? _profileTabAccentGreen : Colors.transparent,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -1343,6 +1109,10 @@ class _EmptyStateCard extends StatelessWidget {
           if (actionLabel != null && onActionPressed != null) ...[
             const SizedBox(height: 18),
             FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: _profileTabAccentGreen,
+                foregroundColor: Colors.white,
+              ),
               onPressed: onActionPressed,
               child: Text(actionLabel!),
             ),

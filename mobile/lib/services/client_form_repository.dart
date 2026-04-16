@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:sqflite/sqflite.dart';
 
 import '../models/client_form_record.dart';
 import 'auth_service.dart';
-import 'local_database.dart';
+import 'backend_api_client.dart';
 
 class ClientFormRepository {
   ClientFormRepository._();
@@ -13,8 +12,6 @@ class ClientFormRepository {
 
   final ValueNotifier<int> changes = ValueNotifier<int>(0);
 
-  Future<Database> get _database async => LocalDatabase.instance.database;
-
   Future<ClientFormRecord> saveRecord({
     String? userId,
     required int vrqolQ1,
@@ -23,22 +20,24 @@ class ClientFormRepository {
     required int vhiQ3,
     required int vhiQ9,
   }) async {
-    final record = ClientFormRecord.create(
-      userId: userId ?? AuthService.instance.currentUser?.id ?? defaultUserId,
-      vrqolQ1: vrqolQ1,
-      vrqolQ4: vrqolQ4,
-      vrqolQ9: vrqolQ9,
-      vhiQ3: vhiQ3,
-      vhiQ9: vhiQ9,
+    final body = await BackendApiClient.instance.postJson(
+      '/client-form-records',
+      <String, Object?>{
+        'responses': <String, Object?>{
+          'vrqol_q1': vrqolQ1,
+          'vrqol_q4': vrqolQ4,
+          'vrqol_q9': vrqolQ9,
+          'vhi_q3': vhiQ3,
+          'vhi_q9': vhiQ9,
+        },
+      },
     );
 
-    final database = await _database;
-    final id = await database.insert(
-      LocalDatabase.clientFormRecordsTable,
-      record.toDatabase()..remove('id'),
-    );
-
-    final savedRecord = record.copyWith(id: id);
+    final recordJson = body['record'];
+    if (recordJson is! Map<String, dynamic>) {
+      throw const BackendApiException('Form kaydı okunamadı.');
+    }
+    final savedRecord = ClientFormRecord.fromApi(recordJson);
     changes.value += 1;
     return savedRecord;
   }
@@ -46,37 +45,38 @@ class ClientFormRepository {
   Future<ClientFormRecord?> fetchLatestRecord({
     String? userId,
   }) async {
-    final resolvedUserId =
-        userId ?? AuthService.instance.currentUser?.id ?? defaultUserId;
-    final database = await _database;
-    final rows = await database.query(
-      LocalDatabase.clientFormRecordsTable,
-      where: 'user_id = ?',
-      whereArgs: [resolvedUserId],
-      orderBy: 'created_at DESC',
-      limit: 1,
-    );
-
-    if (rows.isEmpty) {
+    if (AuthService.instance.currentUser == null) {
       return null;
     }
 
-    return ClientFormRecord.fromDatabase(rows.first);
+    final body =
+        await BackendApiClient.instance.getJson('/client-form-records/latest');
+    final recordJson = body['record'];
+    if (recordJson == null) {
+      return null;
+    }
+    if (recordJson is! Map<String, dynamic>) {
+      throw const BackendApiException('Form kaydı okunamadı.');
+    }
+    return ClientFormRecord.fromApi(recordJson);
   }
 
   Future<List<ClientFormRecord>> fetchRecords({
     String? userId,
   }) async {
-    final resolvedUserId =
-        userId ?? AuthService.instance.currentUser?.id ?? defaultUserId;
-    final database = await _database;
-    final rows = await database.query(
-      LocalDatabase.clientFormRecordsTable,
-      where: 'user_id = ?',
-      whereArgs: [resolvedUserId],
-      orderBy: 'created_at DESC',
-    );
+    if (AuthService.instance.currentUser == null) {
+      return const <ClientFormRecord>[];
+    }
 
-    return rows.map(ClientFormRecord.fromDatabase).toList();
+    final body =
+        await BackendApiClient.instance.getJson('/client-form-records');
+    final recordsJson = body['records'];
+    if (recordsJson is! List) {
+      throw const BackendApiException('Form geçmişi okunamadı.');
+    }
+    return recordsJson
+        .whereType<Map<String, dynamic>>()
+        .map(ClientFormRecord.fromApi)
+        .toList();
   }
 }

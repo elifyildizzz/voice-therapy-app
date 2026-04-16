@@ -8,6 +8,8 @@ import 'package:record/record.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
 
+const Color _authButtonColor = AppTheme.buttonPrimary;
+
 enum _BreathControlStep {
   diaphragm,
   recording,
@@ -260,6 +262,13 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
                       const _DiaphragmGuideCard(),
                       const SizedBox(height: 20),
                       FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _authButtonColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
                         onPressed: _goToRecordingStep,
                         child: const Text('Kayıt aşamasına geç'),
                       ),
@@ -299,9 +308,10 @@ class _DiaphragmIntroCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: 280,
-          child: Center(
+        ClipRect(
+          child: Align(
+            alignment: Alignment.topCenter,
+            heightFactor: 0.77,
             child: Image.asset(
               'assets/branding/diyafram_nefesi.png',
               width: 320,
@@ -373,7 +383,7 @@ class _GuideHeader extends StatelessWidget {
       children: [
         Icon(
           Icons.check_circle_rounded,
-          color: AppTheme.primary,
+          color: _authButtonColor,
           size: 24,
         ),
         SizedBox(width: 8),
@@ -410,7 +420,7 @@ class _GuideBullet extends StatelessWidget {
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
-              color: AppTheme.primary,
+              color: _authButtonColor,
               shape: BoxShape.circle,
             ),
           ),

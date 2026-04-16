@@ -58,8 +58,8 @@ class VoiceAnalyzeConsentScreen extends StatelessWidget {
                           );
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppTheme.homeIconBackground,
-                          foregroundColor: AppTheme.homeAccent,
+                          backgroundColor: AppTheme.buttonPrimary,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 22,
                             vertical: 15,

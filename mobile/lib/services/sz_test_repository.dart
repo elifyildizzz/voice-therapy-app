@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:sqflite/sqflite.dart';
 
 import '../models/sz_test_record.dart';
 import 'auth_service.dart';
-import 'local_database.dart';
+import 'backend_api_client.dart';
 
 class SzTestRepository {
   SzTestRepository._();
@@ -13,26 +12,24 @@ class SzTestRepository {
 
   final ValueNotifier<int> changes = ValueNotifier<int>(0);
 
-  Future<Database> get _database async => LocalDatabase.instance.database;
-
   Future<SzTestRecord> saveRecord({
     String? userId,
     required List<double> sAttempts,
     required List<double> zAttempts,
   }) async {
-    final record = SzTestRecord.create(
-      userId: userId ?? AuthService.instance.currentUser?.id ?? defaultUserId,
-      sAttempts: sAttempts,
-      zAttempts: zAttempts,
+    final body = await BackendApiClient.instance.postJson(
+      '/sz-test-records',
+      <String, Object?>{
+        's_attempts': sAttempts,
+        'z_attempts': zAttempts,
+      },
     );
 
-    final database = await _database;
-    final id = await database.insert(
-      LocalDatabase.szTestRecordsTable,
-      record.toDatabase()..remove('id'),
-    );
-
-    final savedRecord = record.copyWith(id: id);
+    final recordJson = body['record'];
+    if (recordJson is! Map<String, dynamic>) {
+      throw const BackendApiException('S/Z testi kaydı okunamadı.');
+    }
+    final savedRecord = SzTestRecord.fromApi(recordJson);
     changes.value += 1;
     return savedRecord;
   }
@@ -40,37 +37,37 @@ class SzTestRepository {
   Future<SzTestRecord?> fetchLatestRecord({
     String? userId,
   }) async {
-    final resolvedUserId =
-        userId ?? AuthService.instance.currentUser?.id ?? defaultUserId;
-    final database = await _database;
-    final rows = await database.query(
-      LocalDatabase.szTestRecordsTable,
-      where: 'user_id = ?',
-      whereArgs: [resolvedUserId],
-      orderBy: 'created_at DESC',
-      limit: 1,
-    );
-
-    if (rows.isEmpty) {
+    if (AuthService.instance.currentUser == null) {
       return null;
     }
 
-    return SzTestRecord.fromDatabase(rows.first);
+    final body =
+        await BackendApiClient.instance.getJson('/sz-test-records/latest');
+    final recordJson = body['record'];
+    if (recordJson == null) {
+      return null;
+    }
+    if (recordJson is! Map<String, dynamic>) {
+      throw const BackendApiException('S/Z testi kaydı okunamadı.');
+    }
+    return SzTestRecord.fromApi(recordJson);
   }
 
   Future<List<SzTestRecord>> fetchRecords({
     String? userId,
   }) async {
-    final resolvedUserId =
-        userId ?? AuthService.instance.currentUser?.id ?? defaultUserId;
-    final database = await _database;
-    final rows = await database.query(
-      LocalDatabase.szTestRecordsTable,
-      where: 'user_id = ?',
-      whereArgs: [resolvedUserId],
-      orderBy: 'created_at DESC',
-    );
+    if (AuthService.instance.currentUser == null) {
+      return const <SzTestRecord>[];
+    }
 
-    return rows.map(SzTestRecord.fromDatabase).toList();
+    final body = await BackendApiClient.instance.getJson('/sz-test-records');
+    final recordsJson = body['records'];
+    if (recordsJson is! List) {
+      throw const BackendApiException('S/Z testi geçmişi okunamadı.');
+    }
+    return recordsJson
+        .whereType<Map<String, dynamic>>()
+        .map(SzTestRecord.fromApi)
+        .toList();
   }
 }

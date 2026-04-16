@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
-const Color _authButtonColor = Color(0xFF4C766A);
+const Color _authButtonColor = AppTheme.buttonPrimary;
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -269,9 +269,9 @@ class _AuthIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       children: [
-        const Text(
+        Text(
           'Akıllı Ses Terapisi',
           textAlign: TextAlign.center,
           style: TextStyle(

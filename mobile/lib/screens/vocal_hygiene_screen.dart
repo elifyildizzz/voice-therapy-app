@@ -321,17 +321,15 @@ class _TopicAccordionCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Container(
+                    SizedBox(
                       width: 44,
                       height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8EDDB),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        item.icon,
-                        color: const Color(0xFF788A59),
-                        size: 26,
+                      child: Center(
+                        child: Icon(
+                          item.icon,
+                          color: const Color(0xFF788A59),
+                          size: 26,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),

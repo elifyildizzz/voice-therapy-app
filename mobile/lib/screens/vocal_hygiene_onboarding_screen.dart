@@ -88,13 +88,29 @@ class _VocalHygieneOnboardingScreenState
       answers: answers,
       createdAt: DateTime.now(),
     );
-    await VocalHygieneRepository.instance.saveResponse(response);
-    final personalization = VocalHygienePersonalizer.evaluate(response);
+    try {
+      await VocalHygieneRepository.instance.saveResponse(response);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isSubmitting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vokal hijyen cevapları kaydedilirken sorun oluştu.'),
+        ),
+      );
+      return;
+    }
 
     if (!mounted) {
       return;
     }
 
+    final personalization = VocalHygienePersonalizer.evaluate(response);
     await Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => VocalHygieneScreen(

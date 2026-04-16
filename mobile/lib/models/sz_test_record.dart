@@ -39,11 +39,24 @@ class SzTestRecord {
     );
   }
 
+  factory SzTestRecord.fromApi(Map<String, dynamic> map) {
+    return SzTestRecord(
+      id: map['id']?.toString(),
+      userId: map['user_id']?.toString() ?? '',
+      createdAt: _readCreatedAt(map['created_at']),
+      sAttempts: _decodeNumberList(map['s_attempts']),
+      zAttempts: _decodeNumberList(map['z_attempts']),
+      sBest: (map['s_best'] as num).toDouble(),
+      zBest: (map['z_best'] as num).toDouble(),
+      ratio: (map['ratio'] as num).toDouble(),
+    );
+  }
+
   factory SzTestRecord.fromDatabase(Map<String, Object?> map) {
     return SzTestRecord(
-      id: map['id'] as int?,
+      id: map['id']?.toString(),
       userId: map['user_id'] as String,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+      createdAt: _readCreatedAt(map['created_at']),
       sAttempts: _decodeAttempts(map['s_attempts'] as String),
       zAttempts: _decodeAttempts(map['z_attempts'] as String),
       sBest: (map['s_best'] as num).toDouble(),
@@ -52,7 +65,7 @@ class SzTestRecord {
     );
   }
 
-  final int? id;
+  final String? id;
   final String userId;
   final DateTime createdAt;
   final List<double> sAttempts;
@@ -75,7 +88,7 @@ class SzTestRecord {
   }
 
   SzTestRecord copyWith({
-    int? id,
+    String? id,
     String? userId,
     DateTime? createdAt,
     List<double>? sAttempts,
@@ -99,5 +112,22 @@ class SzTestRecord {
   static List<double> _decodeAttempts(String rawValue) {
     final values = jsonDecode(rawValue) as List<dynamic>;
     return values.map((value) => (value as num).toDouble()).toList();
+  }
+
+  static List<double> _decodeNumberList(Object? rawValue) {
+    if (rawValue is! List) {
+      return const <double>[];
+    }
+    return rawValue.map((value) => (value as num).toDouble()).toList();
+  }
+
+  static DateTime _readCreatedAt(Object? value) {
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    if (value is String) {
+      return DateTime.parse(value).toLocal();
+    }
+    return DateTime.now();
   }
 }

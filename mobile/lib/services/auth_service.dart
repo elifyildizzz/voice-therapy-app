@@ -145,6 +145,8 @@ class AuthService {
     required String firstName,
     required String lastName,
     required String email,
+    String? currentPassword,
+    String? newPassword,
   }) async {
     final currentUser = currentUserNotifier.value;
     if (currentUser == null) {
@@ -161,6 +163,14 @@ class AuthService {
     if (!_isValidEmail(normalizedEmail)) {
       throw AuthException('Geçerli bir e-posta adresi girin.');
     }
+    final cleanCurrentPassword = currentPassword?.trim() ?? '';
+    final cleanNewPassword = newPassword?.trim() ?? '';
+    if (cleanNewPassword.isNotEmpty && cleanNewPassword.length < 8) {
+      throw AuthException('Yeni şifre en az 8 karakter olmalıdır.');
+    }
+    if (cleanNewPassword.isNotEmpty && cleanCurrentPassword.isEmpty) {
+      throw AuthException('Şifreyi değiştirmek için mevcut şifreyi girin.');
+    }
 
     final response = await _patchJson(
       '/auth/me',
@@ -168,6 +178,10 @@ class AuthService {
         'email': normalizedEmail,
         'first_name': cleanFirstName,
         'last_name': cleanLastName,
+        if (cleanNewPassword.isNotEmpty) ...{
+          'current_password': cleanCurrentPassword,
+          'new_password': cleanNewPassword,
+        },
       },
     );
 

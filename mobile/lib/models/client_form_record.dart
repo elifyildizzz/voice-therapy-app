@@ -44,11 +44,29 @@ class ClientFormRecord {
     );
   }
 
+  factory ClientFormRecord.fromApi(Map<String, dynamic> map) {
+    final responses = map['responses'];
+    final responseMap = responses is Map<String, dynamic> ? responses : map;
+
+    return ClientFormRecord(
+      id: map['id']?.toString(),
+      userId: map['user_id']?.toString() ?? '',
+      createdAt: _readCreatedAt(map['created_at']),
+      vrqolQ1: responseMap['vrqol_q1'] as int,
+      vrqolQ4: responseMap['vrqol_q4'] as int,
+      vrqolQ9: responseMap['vrqol_q9'] as int,
+      vhiQ3: responseMap['vhi_q3'] as int,
+      vhiQ9: responseMap['vhi_q9'] as int,
+      totalScore: map['total_score'] as int,
+      resultLabel: map['result_label'] as String,
+    );
+  }
+
   factory ClientFormRecord.fromDatabase(Map<String, Object?> map) {
     return ClientFormRecord(
-      id: map['id'] as int?,
+      id: map['id']?.toString(),
       userId: map['user_id'] as String,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+      createdAt: _readCreatedAt(map['created_at']),
       vrqolQ1: map['vrqol_q1'] as int,
       vrqolQ4: map['vrqol_q4'] as int,
       vrqolQ9: map['vrqol_q9'] as int,
@@ -59,7 +77,7 @@ class ClientFormRecord {
     );
   }
 
-  final int? id;
+  final String? id;
   final String userId;
   final DateTime createdAt;
   final int vrqolQ1;
@@ -86,7 +104,7 @@ class ClientFormRecord {
   }
 
   ClientFormRecord copyWith({
-    int? id,
+    String? id,
     String? userId,
     DateTime? createdAt,
     int? vrqolQ1,
@@ -109,5 +127,15 @@ class ClientFormRecord {
       totalScore: totalScore ?? this.totalScore,
       resultLabel: resultLabel ?? this.resultLabel,
     );
+  }
+
+  static DateTime _readCreatedAt(Object? value) {
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    if (value is String) {
+      return DateTime.parse(value).toLocal();
+    }
+    return DateTime.now();
   }
 }

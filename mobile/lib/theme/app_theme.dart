@@ -4,6 +4,8 @@ class AppTheme {
   static const Color primary = Color(0xFF2F5D50);
   static const Color pressed = Color(0xFF254A40);
   static const Color light = Color(0xFF5E867B);
+  static const Color buttonPrimary = Color(0xFF4C766A);
+  static const Color buttonPressed = Color(0xFF3F6258);
   static const Color soft = Color(0xFFE8F2EC);
   static const Color primarySoft = soft;
   static const Color surface = Color(0xFFF7F5F2);
@@ -86,12 +88,12 @@ class AppTheme {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return light.withValues(alpha: 0.35);
+              return buttonPrimary.withValues(alpha: 0.35);
             }
             if (states.contains(WidgetState.pressed)) {
-              return pressed;
+              return buttonPressed;
             }
-            return primary;
+            return buttonPrimary;
           }),
           foregroundColor: WidgetStateProperty.all(Colors.white),
           overlayColor: WidgetStateProperty.resolveWith((states) {

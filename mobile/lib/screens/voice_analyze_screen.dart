@@ -471,8 +471,8 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                           ),
                           child: Text(
                             _currentMeta.letter,
-                            style: const TextStyle(
-                              fontSize: 32,
+                            style: TextStyle(
+                              fontSize: _currentMeta.letter == 'İ' ? 28 : 32,
                               fontWeight: FontWeight.w500,
                               color: AppTheme.textPrimary,
                             ),
@@ -492,24 +492,25 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                         GestureDetector(
                           onTap: canRecord ? _onMicPressed : null,
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 240),
+                            duration: const Duration(milliseconds: 180),
                             width: 96,
                             height: 96,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _isSending
-                                  ? AppTheme.light.withValues(alpha: 0.55)
-                                  : AppTheme.primary,
+                              color: _isRecording
+                                  ? const Color(0xFFCF5A5A)
+                                  : AppTheme.card,
                               border: Border.all(
                                 color: _isRecording
-                                    ? const Color(0xFFF1B97A)
-                                    : Colors.transparent,
-                                width: 6,
+                                    ? const Color(0xFFCF5A5A)
+                                    : AppTheme.homeAccent
+                                        .withValues(alpha: canRecord ? 1 : 0.45),
+                                width: 2,
                               ),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: Color(0x1E163B55),
-                                  blurRadius: 20,
+                                  color: Color(0x24163B55),
+                                  blurRadius: 18,
                                   offset: Offset(0, 10),
                                 ),
                               ],
@@ -519,7 +520,10 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                                   ? Icons.stop_rounded
                                   : Icons.mic_none_rounded,
                               size: 44,
-                              color: Colors.white,
+                              color: _isRecording
+                                  ? Colors.white
+                                  : AppTheme.homeAccent
+                                      .withValues(alpha: canRecord ? 1 : 0.45),
                             ),
                           ),
                         ),
@@ -528,7 +532,7 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                           _isRecording ? 'Kaydı Durdur' : micLabel,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            color: AppTheme.primary,
+                            color: AppTheme.textPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),

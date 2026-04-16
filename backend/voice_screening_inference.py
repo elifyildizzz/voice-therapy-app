@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -18,6 +19,7 @@ MIN_DURATION_SEC = 1.0
 MIN_RMS = 0.003
 MIN_PEAK = 0.015
 MIN_ACTIVE_RATIO = 0.1
+RELAXED_POLICY_ENABLED = os.getenv("VOICE_SCREENING_RELAXED", "1") != "0"
 
 
 @dataclass(frozen=True)
@@ -294,6 +296,16 @@ def analyze_voice_pair(a_path: Path, i_path: Path) -> dict[str, object]:
     )
     max_abs_z_limit = float(decision_policy.get("max_abs_zscore_threshold", 6.0))
     mean_abs_z_limit = float(decision_policy.get("mean_abs_zscore_threshold", 1.5))
+
+    # Mobile recordings can be noisier than the training distribution.
+    # In relaxed mode, clamp policy thresholds to practical minima/maxima
+    # so we do not over-trigger "inconclusive" for otherwise usable samples.
+    if RELAXED_POLICY_ENABLED:
+        min_confidence_healthy = min(min_confidence_healthy, 0.55)
+        min_confidence_pathologic = min(min_confidence_pathologic, 0.65)
+        max_abs_z_limit = max(max_abs_z_limit, 7.5)
+        mean_abs_z_limit = max(mean_abs_z_limit, 1.9)
+
     min_confidence = (
         min_confidence_healthy if label == "healthy" else min_confidence_pathologic
     )

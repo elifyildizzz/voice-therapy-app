@@ -398,7 +398,7 @@ class _TopicAccordionCard extends StatelessWidget {
                     margin: const EdgeInsets.only(top: 12),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF3E5),
+                      color: AppTheme.surface,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Column(
@@ -421,10 +421,9 @@ class _TopicAccordionCard extends StatelessWidget {
                                 child: Text(
                                   tip,
                                   style: const TextStyle(
-                                    fontSize: 15,
-                                    height: 1.3,
-                                    color: AppTheme.textPrimary,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    height: 1.35,
+                                    color: AppTheme.textMuted,
                                   ),
                                 ),
                               ),

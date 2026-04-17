@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
@@ -42,7 +41,8 @@ class AppBottomNavigationBar extends StatelessWidget {
     _BottomNavigationItemData(
       label: 'İlerleme',
       semanticLabel: 'İlerleme',
-      iconAssetPath: 'assets/branding/calendar-check-bold.svg',
+      icon: Icons.calendar_month_outlined,
+      activeIcon: Icons.calendar_month_rounded,
     ),
     _BottomNavigationItemData(
       label: 'Profil',
@@ -145,14 +145,12 @@ class _BottomNavigationItemData {
     required this.semanticLabel,
     this.icon,
     this.activeIcon,
-    this.iconAssetPath,
   });
 
   final String label;
   final IconData? icon;
   final IconData? activeIcon;
   final String semanticLabel;
-  final String? iconAssetPath;
 }
 
 class _BottomNavigationIcon extends StatelessWidget {
@@ -169,15 +167,6 @@ class _BottomNavigationIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isSelected ? selectedColor : AppTheme.textMuted;
-
-    if (item.iconAssetPath != null) {
-      return SvgPicture.asset(
-        item.iconAssetPath!,
-        width: 24,
-        height: 24,
-        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-      );
-    }
 
     return Icon(
       isSelected ? item.activeIcon : item.icon,

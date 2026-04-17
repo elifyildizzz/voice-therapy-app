@@ -361,23 +361,10 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_currentStep == _BreathControlStep.diaphragm) ...[
-                      const _DiaphragmIntroCard(),
-                      const SizedBox(height: 14),
-                      const _DiaphragmGuideCard(),
-                      const SizedBox(height: 20),
-                      Align(
-                        alignment: Alignment.center,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: _authButtonColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: _goToRecordingStep,
-                          child: const Text('Kayıt aşamasına geç'),
-                        ),
+                      const _DiaphragmInfoSection(),
+                      const SizedBox(height: 16),
+                      _DiaphragmHowToCard(
+                        onPressed: _goToRecordingStep,
                       ),
                     ] else ...[
                       const SizedBox(height: 14),
@@ -538,42 +525,30 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
   }
 }
 
-class _DiaphragmIntroCard extends StatelessWidget {
-  const _DiaphragmIntroCard();
+class _DiaphragmInfoSection extends StatelessWidget {
+  const _DiaphragmInfoSection();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRect(
-          child: Align(
-            alignment: Alignment.topCenter,
-            heightFactor: 0.77,
-            child: Image.asset(
-              'assets/branding/diyafram_nefesi.png',
-              width: 320,
-              height: 300,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          'Diyafram nefesi',
+        Text(
+          'Diyafram nefesi nedir?',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppTheme.textPrimary,
           ),
         ),
-        const SizedBox(height: 6),
-        const Text(
-          'Nefes alırken göğüs yerine karın bölgenizin yumuşakça genişlemesine izin verin. Nefesi verirken karın içeri döner ve sesinizi bu destekle taşırsınız.',
+        SizedBox(height: 8),
+        Text(
+          'Diyafram nefesi, sesi destekleyen temel nefes tekniğidir. Doğru uygulandığında sesin daha güçlü, kontrollü ve yorulmadan çıkmasını sağlar.',
           style: TextStyle(
             fontSize: 14,
             height: 1.4,
-            color: Colors.black,
+            color: AppTheme.textMuted,
+            fontWeight: FontWeight.w400,
           ),
         ),
       ],
@@ -581,30 +556,94 @@ class _DiaphragmIntroCard extends StatelessWidget {
   }
 }
 
-class _DiaphragmGuideCard extends StatelessWidget {
-  const _DiaphragmGuideCard();
+class _DiaphragmHowToCard extends StatelessWidget {
+  const _DiaphragmHowToCard({
+    required this.onPressed,
+  });
+
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppTheme.card.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.cardBorder.withValues(alpha: 0.65),
-        ),
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: AppTheme.softShadow,
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _GuideHeader(),
-          SizedBox(height: 12),
-          _GuideBullet(text: 'Omuzlarını kaldırma'),
-          SizedBox(height: 10),
-          _GuideBullet(
-            text:
-                'Burnundan yavaşça derin nefes al, karnının yumuşakça genişlemesine izin ver. Nefesi verirken karnının içeri dönmesine izin ver.',
+          const Text(
+            'Nasıl yapılır?',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 18),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxWidth < 620;
+
+              if (isCompact) {
+                return const Column(
+                  children: [
+                    _GuideSteps(),
+                    SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _DiaphragmIllustration(),
+                    ),
+                  ],
+                );
+              }
+
+              return const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 11,
+                    child: _GuideSteps(),
+                  ),
+                  SizedBox(width: 18),
+                  Expanded(
+                    flex: 9,
+                    child: _DiaphragmIllustration(),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              onPressed: onPressed,
+              style: FilledButton.styleFrom(
+                backgroundColor: _authButtonColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(18)),
+                ),
+              ),
+              child: const Text(
+                'Kayıt aşamasına geç',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -612,27 +651,63 @@ class _DiaphragmGuideCard extends StatelessWidget {
   }
 }
 
-class _GuideHeader extends StatelessWidget {
-  const _GuideHeader();
+class _GuideStep extends StatelessWidget {
+  const _GuideStep({
+    required this.number,
+    required this.title,
+    required this.description,
+  });
+
+  final int number;
+  final String title;
+  final String description;
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          Icons.check_circle_rounded,
-          color: _authButtonColor,
-          size: 24,
-        ),
-        SizedBox(width: 8),
-        Expanded(
+        Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: Color(0xFFE2EEE8),
+            shape: BoxShape.circle,
+          ),
           child: Text(
-            'Karın nefesi kullan',
-            style: TextStyle(
-              fontSize: 15,
+            '$number',
+            style: const TextStyle(
+              fontSize: 17,
               fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
+              color: _authButtonColor,
             ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -640,42 +715,71 @@ class _GuideHeader extends StatelessWidget {
   }
 }
 
-class _GuideBullet extends StatelessWidget {
-  const _GuideBullet({
-    required this.text,
-  });
-
-  final String text;
+class _GuideSteps extends StatelessWidget {
+  const _GuideSteps();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: _authButtonColor,
-              shape: BoxShape.circle,
-            ),
-          ),
+        _GuideStep(
+          number: 1,
+          title: 'Elini Yerleştir',
+          description: 'Bir elini göğsüne, diğerini karnına koy.',
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.45,
-              color: AppTheme.textMuted,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+        SizedBox(height: 16),
+        _GuideStep(
+          number: 2,
+          title: 'Karnını Şişir',
+          description:
+              'Burnundan nefes alırken sadece karnındaki elin dışarı hareket etsin.',
+        ),
+        SizedBox(height: 16),
+        _GuideStep(
+          number: 3,
+          title: 'Yavaşça Bırak',
+          description: 'Nefesini verirken karnının içeri çekildiğini hisset.',
+        ),
+        SizedBox(height: 16),
+        _GuideStep(
+          number: 4,
+          title: 'Kontrol Et',
+          description:
+              'Omuzların sabit mi? Cevabın evet ise harika gidiyorsun.',
         ),
       ],
+    );
+  }
+}
+
+class _DiaphragmIllustration extends StatelessWidget {
+  const _DiaphragmIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F7F4),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppTheme.cardBorder.withValues(alpha: 0.8),
+        ),
+      ),
+      child: ClipRect(
+        child: Align(
+          alignment: Alignment.topCenter,
+          heightFactor: 0.78,
+          child: Image.asset(
+            'assets/branding/diyafram_nefesi.png',
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -703,6 +807,10 @@ class _RecordingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final canPress = !isStopping;
     final currentLabel = _formatSeconds(elapsedSeconds);
+    final accentColor =
+        isRecording ? const Color(0xFFCF5A5A) : AppTheme.brandGreen;
+    final micBackgroundColor =
+        isRecording ? const Color(0xFFFFF1F1) : const Color(0xFFF8FBF8);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -719,7 +827,7 @@ class _RecordingCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 34,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primary,
+              color: AppTheme.textPrimary,
               height: 1,
             ),
           ),
@@ -752,28 +860,26 @@ class _RecordingCard extends StatelessWidget {
             onTapCancel: canPress ? () => onPressEnd() : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: 96,
-              height: 96,
+              width: 102,
+              height: 102,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isRecording ? const Color(0xFFCF5A5A) : AppTheme.card,
+                color: micBackgroundColor,
                 border: Border.all(
-                  color: isRecording
-                      ? const Color(0xFFCF5A5A)
-                      : AppTheme.homeAccent,
+                  color: accentColor,
                   width: 2,
                 ),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x24163B55),
-                    blurRadius: 18,
-                    offset: Offset(0, 10),
+                    color: Color(0x120F1B16),
+                    blurRadius: 22,
+                    offset: Offset(0, 8),
                   ),
                 ],
               ),
               child: Icon(
                 isRecording ? Icons.stop_rounded : Icons.mic_none_rounded,
-                color: isRecording ? Colors.white : AppTheme.homeAccent,
+                color: accentColor,
                 size: 44,
               ),
             ),

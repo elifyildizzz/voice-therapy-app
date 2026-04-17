@@ -282,7 +282,7 @@ class _WelcomeCard extends StatelessWidget {
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 235),
                 child: const Text(
-                  'Terapi önerilerine göre bugün kendine iyi bak.',
+                  'Ses gelişimini desteklemek için bugünkü egzersizlerini tamamla.',
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.4,

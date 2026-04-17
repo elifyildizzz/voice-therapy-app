@@ -18,11 +18,10 @@ String buildSzRatioNote(double ratio) {
   if (ratio == 0) {
     return 'Oran hesaplanamadı. Sonuç ön değerlendirme amaçlıdır.';
   }
-  if (ratio < 0.9) {
-    return 'S ve Z süreleri arasında fark görünüyor. Sonuç ön değerlendirme amaçlıdır.';
+
+  if (ratio > 1.4) {
+    return 'Hesaplanan s/z oranınız (>1.4), ses tellerinizin hava kaçağı yaptığına veya titreşim verimliliğinin azaldığına işaret ediyor olabilir. Ses tellerinizin fiziksel durumunu netleştirmek için bir Kulak Burun Boğaz uzmanına görünmeniz önerilir. Uzman kontrolü gerçekleşene kadar sesinizi zorlamaktan (bağırmak, uzun süre yüksek sesle konuşmak) kaçının.';
   }
-  if (ratio <= 1.2) {
-    return 'S ve Z süreleri birbirine yakın görünüyor. Sonuç ön değerlendirme amaçlıdır.';
-  }
-  return 'S süresi, Z süresine göre daha uzun görünüyor. Sonuç ön değerlendirme amaçlıdır.';
+
+  return 's/z oranınız (<1.4) normal sınırlar içerisinde. Bu sonuç, nefes desteğinizin ve ses tellerinizin birbirine uyumlu çalıştığını gösterir. Mevcut ses sağlığınızı korumak için vokal hijyen kurallarına uymaya devam edebilirsiniz.';
 }

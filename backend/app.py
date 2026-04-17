@@ -39,6 +39,7 @@ vocal_hygiene_responses_collection = database["vocal_hygiene_responses"]
 client_form_records_collection = database["client_form_records"]
 sz_test_records_collection = database["sz_test_records"]
 notification_profiles_collection = database["notification_profiles"]
+measurement_records_collection = database["measurement_records"]
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI(title="Voice Therapy Backend", version="1.0.0")
@@ -85,6 +86,15 @@ class SzTestRecordCreate(BaseModel):
     z_attempts: list[float] = Field(min_length=1)
 
 
+class MeasurementRecordCreate(BaseModel):
+    module: str = Field(min_length=1)
+    exercise_key: str = Field(min_length=1)
+    exercise_title: str = Field(min_length=1)
+    duration_ms: int = Field(gt=0)
+    performed_at: datetime
+    client_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
 class NotificationProfileUpdate(BaseModel):
     vocal_hygiene_enabled: bool | None = None
     max_daily_notifications: int | None = Field(default=None, ge=1, le=3)
@@ -103,6 +113,7 @@ async def startup() -> None:
         "client_form_records",
         "sz_test_records",
         "notification_profiles",
+        "measurement_records",
     ):
         if collection_name not in collection_names:
             await database.create_collection(collection_name)
@@ -117,6 +128,12 @@ async def startup() -> None:
         [("user_id", 1), ("created_at", -1)]
     )
     await notification_profiles_collection.create_index("user_id", unique=True)
+    await measurement_records_collection.create_index(
+        [("user_id", 1), ("client_date", -1), ("created_at", -1)]
+    )
+    await measurement_records_collection.create_index(
+        [("user_id", 1), ("module", 1), ("exercise_key", 1), ("client_date", 1)]
+    )
 
 
 @app.on_event("shutdown")
@@ -311,6 +328,20 @@ def _serialize_notification_profile(document: dict[str, Any]) -> dict[str, Any]:
         "active_plan": _serialize_notification_plan(document.get("active_plan")),
         "created_at": _serialize_datetime(document["created_at"]),
         "updated_at": _serialize_datetime(document["updated_at"]),
+    }
+
+
+def _serialize_measurement_record(document: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": _serialize_object_id(document["_id"]),
+        "user_id": _serialize_object_id(document["user_id"]),
+        "module": document["module"],
+        "exercise_key": document["exercise_key"],
+        "exercise_title": document["exercise_title"],
+        "duration_ms": document["duration_ms"],
+        "client_date": document["client_date"],
+        "performed_at": _serialize_datetime(document["performed_at"]),
+        "created_at": _serialize_datetime(document["created_at"]),
     }
 
 
@@ -921,6 +952,73 @@ async def list_sz_test_records(
     )
     documents = await cursor.to_list(length=100)
     return {"records": [_serialize_sz_test_record(document) for document in documents]}
+
+
+@app.post("/measurement-records", status_code=201)
+async def create_measurement_record(
+    payload: MeasurementRecordCreate,
+    current_user: dict[str, Any] = Depends(_get_current_user),
+) -> dict[str, Any]:
+    clean_module = payload.module.strip()
+    clean_exercise_key = payload.exercise_key.strip()
+    clean_exercise_title = payload.exercise_title.strip()
+
+    if clean_module not in {"vocal_function", "breath_control"}:
+        raise HTTPException(status_code=422, detail="Geçersiz ölçüm modülü.")
+
+    existing_count = await measurement_records_collection.count_documents(
+        {
+            "user_id": current_user["_id"],
+            "module": clean_module,
+            "exercise_key": clean_exercise_key,
+            "client_date": payload.client_date,
+        }
+    )
+    if existing_count >= 2:
+        raise HTTPException(
+            status_code=409,
+            detail="Bugün için iki ölçüm zaten kaydedildi.",
+        )
+
+    performed_at = payload.performed_at
+    if performed_at.tzinfo is None:
+        performed_at = performed_at.replace(tzinfo=timezone.utc)
+
+    document = {
+        "user_id": current_user["_id"],
+        "module": clean_module,
+        "exercise_key": clean_exercise_key,
+        "exercise_title": clean_exercise_title,
+        "duration_ms": payload.duration_ms,
+        "client_date": payload.client_date,
+        "performed_at": performed_at.astimezone(timezone.utc),
+        "created_at": _utc_now(),
+    }
+    result = await measurement_records_collection.insert_one(document)
+    document["_id"] = result.inserted_id
+    return {"record": _serialize_measurement_record(document)}
+
+
+@app.get("/measurement-records")
+async def list_measurement_records(
+    current_user: dict[str, Any] = Depends(_get_current_user),
+) -> dict[str, Any]:
+    cursor = measurement_records_collection.find(
+        {"user_id": current_user["_id"]}
+    ).sort("performed_at", -1)
+    documents = await cursor.to_list(length=500)
+    serialized_records = [
+        _serialize_measurement_record(document) for document in documents
+    ]
+    records_by_day: dict[str, list[dict[str, Any]]] = {}
+    for record in serialized_records:
+        client_date = record["client_date"]
+        records_by_day.setdefault(client_date, []).append(record)
+
+    return {
+        "records_by_day": records_by_day,
+        "records": serialized_records,
+    }
 
 
 @app.post("/analyze-voice")

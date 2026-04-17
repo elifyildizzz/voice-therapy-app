@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/measurement_record.dart';
+import '../services/measurement_repository.dart';
 import '../theme/app_theme.dart';
 import 'warmup_exercise.dart';
 
@@ -22,18 +24,58 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
   static const Duration _tick = Duration(milliseconds: 100);
 
   final Stopwatch _stopwatch = Stopwatch();
+  final MeasurementRepository _repository = MeasurementRepository.instance;
 
   Timer? _ticker;
   Duration _elapsed = Duration.zero;
   bool _hasUnsavedMeasurement = false;
+  bool _isLoadingRecords = true;
+  bool _isSavingMeasurement = false;
+  List<MeasurementRecord> _records = const <MeasurementRecord>[];
 
-  List<MeasurementRecord> get _records =>
-      MeasurementDraftStore.recordsForToday(widget.exercise.titleEn);
+  @override
+  void initState() {
+    super.initState();
+    final cachedRecords = _repository.peekRecordsForToday(
+      module: MeasurementRepository.vocalFunctionModule,
+      exerciseKey: widget.exercise.titleEn,
+    );
+    if (_repository.hasLoadedCache) {
+      _records = cachedRecords;
+      _isLoadingRecords = false;
+    } else {
+      unawaited(_loadRecords());
+    }
+  }
 
   @override
   void dispose() {
     _ticker?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadRecords() async {
+    try {
+      final records = await _repository.fetchRecordsForToday(
+        module: MeasurementRepository.vocalFunctionModule,
+        exerciseKey: widget.exercise.titleEn,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _records = records;
+        _isLoadingRecords = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoadingRecords = false;
+      });
+      _showMessage('Ölçüm kayıtları yüklenemedi.');
+    }
   }
 
   void _toggleTimer() {
@@ -45,6 +87,14 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
         _hasUnsavedMeasurement = _elapsed > Duration.zero;
       });
       return;
+    }
+
+    if (_elapsed > Duration.zero) {
+      _stopwatch
+        ..stop()
+        ..reset();
+      _elapsed = Duration.zero;
+      _hasUnsavedMeasurement = false;
     }
 
     _stopwatch.start();
@@ -61,6 +111,14 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
   }
 
   void _resetTimer() {
+    if (_isSavingMeasurement) {
+      return;
+    }
+
+    _clearMeasurementState();
+  }
+
+  void _clearMeasurementState() {
     _ticker?.cancel();
     _stopwatch
       ..stop()
@@ -71,21 +129,38 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
     });
   }
 
-  void _saveMeasurement() {
-    final slot = MeasurementDraftStore.saveToday(
-      exerciseKey: widget.exercise.titleEn,
-      duration: _elapsed,
-    );
-
-    if (slot == null) {
-      _showMessage('Bugün için iki ölçüm zaten kaydedildi.');
+  Future<void> _saveMeasurement() async {
+    if (_isSavingMeasurement) {
       return;
     }
 
-    _showMessage(
-      slot == 1 ? 'İlk ölçüm kaydedildi.' : 'İkinci ölçüm kaydedildi.',
-    );
-    _resetTimer();
+    setState(() {
+      _isSavingMeasurement = true;
+    });
+
+    try {
+      final slot = await _repository.saveRecord(
+        module: MeasurementRepository.vocalFunctionModule,
+        exerciseKey: widget.exercise.titleEn,
+        exerciseTitle: widget.exercise.titleEn,
+        duration: _elapsed,
+      );
+      await _loadRecords();
+      _showMessage(
+        slot == 1 ? 'İlk ölçüm kaydedildi.' : 'İkinci ölçüm kaydedildi.',
+      );
+      _clearMeasurementState();
+    } on MeasurementSaveLimitException catch (error) {
+      _showMessage(error.message);
+    } catch (_) {
+      _showMessage('Ölçüm kaydedilirken bir sorun oluştu.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingMeasurement = false;
+        });
+      }
+    }
   }
 
   void _showMessage(String message) {
@@ -100,6 +175,7 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
         widget.exercise.howToText ??
         '';
     final canSave = !_stopwatch.isRunning &&
+        !_isSavingMeasurement &&
         _hasUnsavedMeasurement &&
         _elapsed > Duration.zero;
 
@@ -122,6 +198,7 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
                     _StopwatchCard(
                       elapsed: _elapsed,
                       isRunning: _stopwatch.isRunning,
+                      hasElapsedValue: _elapsed > Duration.zero,
                       onToggle: _toggleTimer,
                     ),
                     const SizedBox(height: 18),
@@ -136,7 +213,10 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _DailyRecordsCard(records: _records),
+                    _DailyRecordsCard(
+                      records: _records,
+                      isLoading: _isLoadingRecords,
+                    ),
                     const SizedBox(height: 10),
                     const Text(
                       '* Günde iki ölçüm kaydı yapabilirsiniz.',
@@ -164,7 +244,8 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
                               ],
                             ),
                             child: OutlinedButton(
-                              onPressed: _resetTimer,
+                              onPressed:
+                                  _isSavingMeasurement ? null : _resetTimer,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppTheme.textPrimary,
                                 side:
@@ -219,13 +300,39 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                               ),
-                              child: const Text(
-                                'Kaydet',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                              child: _isSavingMeasurement
+                                  ? const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          'Kaydediliyor...',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : const Text(
+                                      'Kaydet',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
@@ -294,11 +401,13 @@ class _StopwatchCard extends StatelessWidget {
   const _StopwatchCard({
     required this.elapsed,
     required this.isRunning,
+    required this.hasElapsedValue,
     required this.onToggle,
   });
 
   final Duration elapsed;
   final bool isRunning;
+  final bool hasElapsedValue;
   final VoidCallback onToggle;
 
   @override
@@ -383,7 +492,11 @@ class _StopwatchCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        isRunning ? 'Durdur' : 'Başlat',
+                        isRunning
+                            ? 'Durdur'
+                            : hasElapsedValue
+                                ? 'Tekrar Başlat'
+                                : 'Başlat',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -453,9 +566,11 @@ class _RingPainter extends CustomPainter {
 class _DailyRecordsCard extends StatelessWidget {
   const _DailyRecordsCard({
     required this.records,
+    required this.isLoading,
   });
 
   final List<MeasurementRecord> records;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -481,15 +596,26 @@ class _DailyRecordsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          _MeasurementRow(
-            label: '1. Ölçüm',
-            duration: first,
-          ),
-          const SizedBox(height: 8),
-          _MeasurementRow(
-            label: '2. Ölçüm',
-            duration: second,
-          ),
+          if (isLoading)
+            const Text(
+              'Kayıtlar yükleniyor...',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+            )
+          else ...[
+            _MeasurementRow(
+              label: '1. Ölçüm',
+              duration: first,
+            ),
+            const SizedBox(height: 8),
+            _MeasurementRow(
+              label: '2. Ölçüm',
+              duration: second,
+            ),
+          ],
         ],
       ),
     );
@@ -535,57 +661,5 @@ class _MeasurementRow extends StatelessWidget {
   String _formatDuration(Duration duration) {
     final totalSeconds = duration.inMilliseconds / 1000;
     return '${totalSeconds.toStringAsFixed(1)} sn';
-  }
-}
-
-class MeasurementRecord {
-  const MeasurementRecord({
-    required this.duration,
-    required this.savedAt,
-  });
-
-  final Duration duration;
-  final DateTime savedAt;
-}
-
-class MeasurementDraftStore {
-  static final Map<String, List<MeasurementRecord>> _recordsByKey =
-      <String, List<MeasurementRecord>>{};
-
-  static List<MeasurementRecord> recordsForToday(String exerciseKey) {
-    final today = DateTime.now();
-    return List<MeasurementRecord>.unmodifiable(
-      (_recordsByKey[exerciseKey] ?? <MeasurementRecord>[])
-          .where((record) => _isSameDay(record.savedAt, today))
-          .toList(),
-    );
-  }
-
-  static int? saveToday({
-    required String exerciseKey,
-    required Duration duration,
-  }) {
-    final todayRecords = recordsForToday(exerciseKey);
-    if (todayRecords.length >= 2) {
-      return null;
-    }
-
-    final allRecords = _recordsByKey.putIfAbsent(
-      exerciseKey,
-      () => <MeasurementRecord>[],
-    );
-    allRecords.add(
-      MeasurementRecord(
-        duration: duration,
-        savedAt: DateTime.now(),
-      ),
-    );
-    return todayRecords.length + 1;
-  }
-
-  static bool _isSameDay(DateTime left, DateTime right) {
-    return left.year == right.year &&
-        left.month == right.month &&
-        left.day == right.day;
   }
 }

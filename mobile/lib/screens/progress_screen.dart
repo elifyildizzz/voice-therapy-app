@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../models/measurement_record.dart';
+import '../services/measurement_repository.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
 
@@ -51,7 +53,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
     'Cumartesi',
   ];
 
-  late final Map<DateTime, List<_ProgressRecord>> _recordsByDay;
+  final MeasurementRepository _repository = MeasurementRepository.instance;
+  Map<DateTime, List<_ProgressRecord>> _recordsByDay =
+      <DateTime, List<_ProgressRecord>>{};
+  bool _isLoading = true;
   late DateTime _selectedDate;
   late DateTime _visibleMonth;
 
@@ -61,7 +66,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final today = _dateOnly(DateTime.now());
     _selectedDate = today;
     _visibleMonth = DateTime(today.year, today.month);
-    _recordsByDay = _buildMockRecords(today);
+    _repository.changes.addListener(_handleRepositoryChange);
+    if (_repository.hasLoadedCache) {
+      _applyRecords(_repository.peekRecords());
+      _isLoading = false;
+    } else {
+      _loadRecords();
+    }
+  }
+
+  @override
+  void dispose() {
+    _repository.changes.removeListener(_handleRepositoryChange);
+    super.dispose();
   }
 
   @override
@@ -105,6 +122,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   _SelectedDayHeader(
                     formattedDate: _formatLongDate(_selectedDate),
                     totalRecords: selectedRecords.length,
+                    isLoading: _isLoading,
                   ),
                   const SizedBox(height: 14),
                   _ModuleSectionCard(
@@ -189,125 +207,59 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return cells;
   }
 
-  Map<DateTime, List<_ProgressRecord>> _buildMockRecords(DateTime anchorDay) {
-    final entries = <_ProgressRecord>[
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Isınma',
-        duration: const Duration(seconds: 16),
-        performedAt:
-            DateTime(anchorDay.year, anchorDay.month, anchorDay.day, 8, 20),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Isınma',
-        duration: const Duration(seconds: 18),
-        performedAt:
-            DateTime(anchorDay.year, anchorDay.month, anchorDay.day, 20, 10),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Tiz Perdede Fonasyon',
-        duration: const Duration(seconds: 13),
-        performedAt:
-            DateTime(anchorDay.year, anchorDay.month, anchorDay.day, 20, 18),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.breathControl,
-        title: 'Maximum /a/ Fonasyonu',
-        duration: const Duration(seconds: 11),
-        performedAt:
-            DateTime(anchorDay.year, anchorDay.month, anchorDay.day, 20, 32),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Uzatılmış Fonasyon',
-        duration: const Duration(seconds: 15),
-        performedAt:
-            DateTime(anchorDay.year, anchorDay.month, anchorDay.day - 1, 8, 5),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Pes Perdede Fonasyon',
-        duration: const Duration(seconds: 14),
-        performedAt: DateTime(
-            anchorDay.year, anchorDay.month, anchorDay.day - 1, 19, 55),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.breathControl,
-        title: 'Maximum /a/ Fonasyonu',
-        duration: const Duration(seconds: 9),
-        performedAt: DateTime(
-            anchorDay.year, anchorDay.month, anchorDay.day - 1, 20, 12),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Isınma',
-        duration: const Duration(seconds: 12),
-        performedAt: DateTime(anchorDay.year, anchorDay.month, 3, 8, 12),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Tiz Perdede Fonasyon',
-        duration: const Duration(seconds: 11),
-        performedAt: DateTime(anchorDay.year, anchorDay.month, 3, 20, 6),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.breathControl,
-        title: 'Maximum /a/ Fonasyonu',
-        duration: const Duration(seconds: 10),
-        performedAt: DateTime(anchorDay.year, anchorDay.month, 5, 21, 2),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Uzatılmış Fonasyon',
-        duration: const Duration(seconds: 17),
-        performedAt: DateTime(anchorDay.year, anchorDay.month, 9, 7, 45),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Pes Perdede Fonasyon',
-        duration: const Duration(seconds: 15),
-        performedAt: DateTime(anchorDay.year, anchorDay.month, 9, 20, 15),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.breathControl,
-        title: 'Maximum /a/ Fonasyonu',
-        duration: const Duration(seconds: 12),
-        performedAt: DateTime(anchorDay.year, anchorDay.month, 9, 20, 34),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Isınma',
-        duration: const Duration(seconds: 14),
-        performedAt: DateTime(anchorDay.year, anchorDay.month - 1, 28, 8, 22),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.breathControl,
-        title: 'Maximum /a/ Fonasyonu',
-        duration: const Duration(seconds: 8),
-        performedAt: DateTime(anchorDay.year, anchorDay.month - 1, 28, 20, 28),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Tiz Perdede Fonasyon',
-        duration: const Duration(seconds: 16),
-        performedAt: DateTime(anchorDay.year, anchorDay.month + 1, 2, 8, 25),
-      ),
-      _ProgressRecord(
-        module: _ProgressModule.vocalFunction,
-        title: 'Uzatılmış Fonasyon',
-        duration: const Duration(seconds: 18),
-        performedAt: DateTime(anchorDay.year, anchorDay.month + 1, 2, 20, 5),
-      ),
-    ];
+  void _handleRepositoryChange() {
+    _loadRecords();
+  }
 
-    final recordsByDay = <DateTime, List<_ProgressRecord>>{};
-    for (final entry in entries) {
-      final day = _dateOnly(entry.performedAt);
-      recordsByDay.putIfAbsent(day, () => <_ProgressRecord>[]).add(entry);
+  Future<void> _loadRecords() async {
+    try {
+      final records = await _repository.fetchRecords();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _applyRecords(records);
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _recordsByDay = <DateTime, List<_ProgressRecord>>{};
+        _isLoading = false;
+      });
     }
-    return recordsByDay;
+  }
+
+  void _applyRecords(List<MeasurementRecord> records) {
+    final recordsByDay = <DateTime, List<_ProgressRecord>>{};
+
+    for (final record in records) {
+      final day = _dateFromClientDate(record.clientDate);
+      recordsByDay.putIfAbsent(day, () => <_ProgressRecord>[]).add(
+            _mapMeasurementToProgress(record),
+          );
+    }
+
+    _recordsByDay = recordsByDay;
+  }
+
+  _ProgressRecord _mapMeasurementToProgress(MeasurementRecord record) {
+    final displayTitle =
+        record.module == MeasurementRepository.vocalFunctionModule &&
+                record.exerciseTitle.startsWith('Egzersiz ')
+            ? record.exerciseKey
+            : record.exerciseTitle;
+
+    return _ProgressRecord(
+      module: record.module == MeasurementRepository.vocalFunctionModule
+          ? _ProgressModule.vocalFunction
+          : _ProgressModule.breathControl,
+      title: displayTitle,
+      duration: record.duration,
+      performedAt: record.performedAt,
+    );
   }
 
   List<_ProgressRecordGroup> _groupRecords(
@@ -344,6 +296,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
   DateTime _dateOnly(DateTime value) =>
       DateTime(value.year, value.month, value.day);
 
+  DateTime _dateFromClientDate(String value) {
+    final parts = value.split('-');
+    if (parts.length == 3) {
+      final year = int.tryParse(parts[0]);
+      final month = int.tryParse(parts[1]);
+      final day = int.tryParse(parts[2]);
+      if (year != null && month != null && day != null) {
+        return DateTime(year, month, day);
+      }
+    }
+    return _dateOnly(DateTime.now());
+  }
+
   String _formatMonthYear(DateTime date) =>
       '${_monthNames[date.month - 1]} ${date.year}';
 
@@ -357,10 +322,12 @@ class _SelectedDayHeader extends StatelessWidget {
   const _SelectedDayHeader({
     required this.formattedDate,
     required this.totalRecords,
+    required this.isLoading,
   });
 
   final String formattedDate;
   final int totalRecords;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -378,9 +345,11 @@ class _SelectedDayHeader extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          totalRecords == 0
-              ? 'Bugün için henüz kayıt yok.'
-              : 'Toplam $totalRecords kayıt bulundu.',
+          isLoading
+              ? 'Kayıtlar yükleniyor...'
+              : totalRecords == 0
+                  ? 'Bugün için henüz kayıt yok.'
+                  : 'Toplam $totalRecords kayıt bulundu.',
           style: const TextStyle(
             fontSize: 14,
             height: 1.45,
@@ -820,12 +789,6 @@ class _ProgressRecordGroup {
 }
 
 String _formatDuration(Duration duration) {
-  final minutes = duration.inMinutes;
-  final seconds = duration.inSeconds % 60;
-
-  if (minutes == 0) {
-    return '${seconds.toString().padLeft(2, '0')} sn';
-  }
-
-  return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  final totalSeconds = duration.inMilliseconds / 1000;
+  return '${totalSeconds.toStringAsFixed(1)} sn';
 }

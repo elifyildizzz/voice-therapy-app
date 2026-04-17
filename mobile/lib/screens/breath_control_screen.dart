@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
+import '../models/measurement_record.dart';
+import '../services/measurement_repository.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_top_header.dart';
 
@@ -24,6 +26,7 @@ class BreathControlScreen extends StatefulWidget {
 
 class _BreathControlScreenState extends State<BreathControlScreen> {
   final AudioRecorder _audioRecorder = AudioRecorder();
+  final MeasurementRepository _repository = MeasurementRepository.instance;
   final Stopwatch _stopwatch = Stopwatch();
 
   Timer? _ticker;
@@ -32,13 +35,52 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
   bool _isStopping = false;
   bool _stopAfterStart = false;
   bool _hasUnsavedMeasurement = false;
+  bool _isLoadingSavedRecords = true;
+  bool _isSavingMeasurement = false;
   double _elapsedSeconds = 0;
   double _bestSeconds = 0;
   _BreathControlStep _currentStep = _BreathControlStep.diaphragm;
   final List<_PhonationAttempt> _attempts = <_PhonationAttempt>[];
+  List<MeasurementRecord> _savedRecords = const <MeasurementRecord>[];
 
-  List<_BreathMeasurementRecord> get _savedRecords =>
-      _BreathMeasurementDraftStore.recordsForToday('maximum_a_phonation');
+  @override
+  void initState() {
+    super.initState();
+    final cachedRecords = _repository.peekRecordsForToday(
+      module: MeasurementRepository.breathControlModule,
+      exerciseKey: 'maximum_a_phonation',
+    );
+    if (_repository.hasLoadedCache) {
+      _savedRecords = cachedRecords;
+      _isLoadingSavedRecords = false;
+    } else {
+      unawaited(_loadSavedRecords());
+    }
+  }
+
+  Future<void> _loadSavedRecords() async {
+    try {
+      final records = await _repository.fetchRecordsForToday(
+        module: MeasurementRepository.breathControlModule,
+        exerciseKey: 'maximum_a_phonation',
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _savedRecords = records;
+        _isLoadingSavedRecords = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoadingSavedRecords = false;
+      });
+      _showMessage('Ölçüm kayıtları yüklenemedi.');
+    }
+  }
 
   Future<void> _startRecording() async {
     if (_isStarting || _isRecording || _isStopping) {
@@ -186,32 +228,53 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
   }
 
   void _resetMeasurement() {
-    if (_isRecording || _isStarting || _isStopping) {
+    if (_isRecording || _isStarting || _isStopping || _isSavingMeasurement) {
       return;
     }
 
+    _clearMeasurementState();
+  }
+
+  void _clearMeasurementState() {
     setState(() {
       _elapsedSeconds = 0;
       _hasUnsavedMeasurement = false;
     });
   }
 
-  void _saveMeasurement() {
-    final duration = Duration(milliseconds: (_elapsedSeconds * 1000).round());
-    final slot = _BreathMeasurementDraftStore.saveToday(
-      exerciseKey: 'maximum_a_phonation',
-      duration: duration,
-    );
-
-    if (slot == null) {
-      _showMessage('Bugün için iki ölçüm zaten kaydedildi.');
+  Future<void> _saveMeasurement() async {
+    if (_isSavingMeasurement) {
       return;
     }
 
-    _showMessage(
-      slot == 1 ? 'İlk ölçüm kaydedildi.' : 'İkinci ölçüm kaydedildi.',
-    );
-    _resetMeasurement();
+    setState(() {
+      _isSavingMeasurement = true;
+    });
+
+    final duration = Duration(milliseconds: (_elapsedSeconds * 1000).round());
+    try {
+      final slot = await _repository.saveRecord(
+        module: MeasurementRepository.breathControlModule,
+        exerciseKey: 'maximum_a_phonation',
+        exerciseTitle: 'Maximum /a/ Fonasyonu',
+        duration: duration,
+      );
+      await _loadSavedRecords();
+      _showMessage(
+        slot == 1 ? 'İlk ölçüm kaydedildi.' : 'İkinci ölçüm kaydedildi.',
+      );
+      _clearMeasurementState();
+    } on MeasurementSaveLimitException catch (error) {
+      _showMessage(error.message);
+    } catch (_) {
+      _showMessage('Ölçüm kaydedilirken bir sorun oluştu.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingMeasurement = false;
+        });
+      }
+    }
   }
 
   Future<void> _goToDiaphragmStep() async {
@@ -273,6 +336,7 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
     final canSave = !_isRecording &&
         !_isStarting &&
         !_isStopping &&
+        !_isSavingMeasurement &&
         _hasUnsavedMeasurement &&
         _elapsedSeconds > 0;
 
@@ -329,7 +393,10 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
                         lastSeconds: lastSeconds,
                       ),
                       const SizedBox(height: 14),
-                      _DailyBreathRecordsCard(records: _savedRecords),
+                      _DailyBreathRecordsCard(
+                        records: _savedRecords,
+                        isLoading: _isLoadingSavedRecords,
+                      ),
                       const SizedBox(height: 10),
                       const Text(
                         '* Günde iki ölçüm kaydı yapabilirsiniz.',
@@ -357,7 +424,9 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
                                 ],
                               ),
                               child: OutlinedButton(
-                                onPressed: _resetMeasurement,
+                                onPressed: _isSavingMeasurement
+                                    ? null
+                                    : _resetMeasurement,
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppTheme.textPrimary,
                                   side: const BorderSide(
@@ -416,13 +485,39 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
                                     borderRadius: BorderRadius.circular(999),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Kaydet',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
+                                child: _isSavingMeasurement
+                                    ? const Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text(
+                                            'Kaydediliyor...',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const Text(
+                                        'Kaydet',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
                               ),
                             ),
                           ),
@@ -789,9 +884,11 @@ class _PhonationAttempt {
 class _DailyBreathRecordsCard extends StatelessWidget {
   const _DailyBreathRecordsCard({
     required this.records,
+    required this.isLoading,
   });
 
-  final List<_BreathMeasurementRecord> records;
+  final List<MeasurementRecord> records;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -817,15 +914,26 @@ class _DailyBreathRecordsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          _BreathMeasurementRow(
-            label: '1. Ölçüm',
-            duration: first,
-          ),
-          const SizedBox(height: 8),
-          _BreathMeasurementRow(
-            label: '2. Ölçüm',
-            duration: second,
-          ),
+          if (isLoading)
+            const Text(
+              'Kayıtlar yükleniyor...',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+            )
+          else ...[
+            _BreathMeasurementRow(
+              label: '1. Ölçüm',
+              duration: first,
+            ),
+            const SizedBox(height: 8),
+            _BreathMeasurementRow(
+              label: '2. Ölçüm',
+              duration: second,
+            ),
+          ],
         ],
       ),
     );
@@ -866,58 +974,6 @@ class _BreathMeasurementRow extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class _BreathMeasurementRecord {
-  const _BreathMeasurementRecord({
-    required this.duration,
-    required this.savedAt,
-  });
-
-  final Duration duration;
-  final DateTime savedAt;
-}
-
-class _BreathMeasurementDraftStore {
-  static final Map<String, List<_BreathMeasurementRecord>> _recordsByKey =
-      <String, List<_BreathMeasurementRecord>>{};
-
-  static List<_BreathMeasurementRecord> recordsForToday(String exerciseKey) {
-    final today = DateTime.now();
-    return List<_BreathMeasurementRecord>.unmodifiable(
-      (_recordsByKey[exerciseKey] ?? <_BreathMeasurementRecord>[])
-          .where((record) => _isSameDay(record.savedAt, today))
-          .toList(),
-    );
-  }
-
-  static int? saveToday({
-    required String exerciseKey,
-    required Duration duration,
-  }) {
-    final todayRecords = recordsForToday(exerciseKey);
-    if (todayRecords.length >= 2) {
-      return null;
-    }
-
-    final allRecords = _recordsByKey.putIfAbsent(
-      exerciseKey,
-      () => <_BreathMeasurementRecord>[],
-    );
-    allRecords.add(
-      _BreathMeasurementRecord(
-        duration: duration,
-        savedAt: DateTime.now(),
-      ),
-    );
-    return todayRecords.length + 1;
-  }
-
-  static bool _isSameDay(DateTime left, DateTime right) {
-    return left.year == right.year &&
-        left.month == right.month &&
-        left.day == right.day;
   }
 }
 

@@ -356,13 +356,13 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                padding: const EdgeInsets.fromLTRB(20, 6, 20, 28),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_currentStep == _BreathControlStep.diaphragm) ...[
                       const _DiaphragmInfoSection(),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       _DiaphragmHowToCard(
                         onPressed: _goToRecordingStep,
                       ),
@@ -533,6 +533,8 @@ class _DiaphragmInfoSection extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _DiaphragmIllustration(),
+        SizedBox(height: 0),
         Text(
           'Diyafram nefesi nedir?',
           style: TextStyle(
@@ -565,100 +567,76 @@ class _DiaphragmHowToCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppTheme.cardBorder),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Nasıl yapılır?',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+          decoration: BoxDecoration(
+            color: AppTheme.card,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.cardBorder),
           ),
-          const SizedBox(height: 18),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 620;
-
-              if (isCompact) {
-                return const Column(
-                  children: [
-                    _GuideSteps(),
-                    SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: _DiaphragmIllustration(),
-                    ),
-                  ],
-                );
-              }
-
-              return const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Expanded(
-                    flex: 11,
-                    child: _GuideSteps(),
-                  ),
-                  SizedBox(width: 18),
-                  Expanded(
-                    flex: 9,
-                    child: _DiaphragmIllustration(),
+                  _InstructionCheckIcon(),
+                  SizedBox(width: 8),
+                  Text(
+                    'Nasıl yapılır?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary,
+                    ),
                   ),
                 ],
-              );
-            },
-          ),
-          const SizedBox(height: 18),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton(
-              onPressed: onPressed,
-              style: FilledButton.styleFrom(
-                backgroundColor: _authButtonColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 14,
-                ),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(18)),
-                ),
               ),
-              child: const Text(
-                'Kayıt aşamasına geç',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
+              SizedBox(height: 12),
+              _GuideSteps(),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton(
+            onPressed: onPressed,
+            style: FilledButton.styleFrom(
+              backgroundColor: _authButtonColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 22,
+                vertical: 13,
+              ),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
+            ),
+            child: const Text(
+              'Kayıt aşamasına geç',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
 class _GuideStep extends StatelessWidget {
   const _GuideStep({
-    required this.number,
     required this.title,
     required this.description,
   });
 
-  final int number;
   final String title;
   final String description;
 
@@ -667,24 +645,18 @@ class _GuideStep extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 34,
-          height: 34,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: Color(0xFFE2EEE8),
-            shape: BoxShape.circle,
-          ),
-          child: Text(
-            '$number',
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: _authButtonColor,
+        Padding(
+          padding: const EdgeInsets.only(top: 7),
+          child: Container(
+            width: 5,
+            height: 5,
+            decoration: const BoxDecoration(
+              color: AppTheme.homeAccent,
+              shape: BoxShape.circle,
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -692,17 +664,18 @@ class _GuideStep extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
                   color: AppTheme.textPrimary,
+                  height: 1.25,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 description,
                 style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.45,
+                  fontSize: 13,
+                  height: 1.32,
                   color: AppTheme.textMuted,
                   fontWeight: FontWeight.w400,
                 ),
@@ -724,26 +697,22 @@ class _GuideSteps extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _GuideStep(
-          number: 1,
           title: 'Elini Yerleştir',
           description: 'Bir elini göğsüne, diğerini karnına koy.',
         ),
-        SizedBox(height: 16),
+        SizedBox(height: 10),
         _GuideStep(
-          number: 2,
           title: 'Karnını Şişir',
           description:
               'Burnundan nefes alırken sadece karnındaki elin dışarı hareket etsin.',
         ),
-        SizedBox(height: 16),
+        SizedBox(height: 10),
         _GuideStep(
-          number: 3,
           title: 'Yavaşça Bırak',
           description: 'Nefesini verirken karnının içeri çekildiğini hisset.',
         ),
-        SizedBox(height: 16),
+        SizedBox(height: 10),
         _GuideStep(
-          number: 4,
           title: 'Kontrol Et',
           description:
               'Omuzların sabit mi? Cevabın evet ise harika gidiyorsun.',
@@ -758,27 +727,37 @@ class _DiaphragmIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return SizedBox(
+      height: 238,
+      width: double.infinity,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Image.asset(
+          'assets/branding/diyafram_nefesi.png',
+          width: 305,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+}
+
+class _InstructionCheckIcon extends StatelessWidget {
+  const _InstructionCheckIcon();
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 8,
+      width: 18,
+      height: 18,
+      decoration: const BoxDecoration(
+        color: AppTheme.homeAccent,
+        shape: BoxShape.circle,
       ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F7F4),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AppTheme.cardBorder.withValues(alpha: 0.8),
-        ),
-      ),
-      child: ClipRect(
-        child: Align(
-          alignment: Alignment.topCenter,
-          heightFactor: 0.78,
-          child: Image.asset(
-            'assets/branding/diyafram_nefesi.png',
-            fit: BoxFit.contain,
-          ),
-        ),
+      child: const Icon(
+        Icons.check_rounded,
+        color: Colors.white,
+        size: 13,
       ),
     );
   }

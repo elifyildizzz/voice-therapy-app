@@ -874,7 +874,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isLoadingTodayRecordCount ? '...' : '$todayRecordCount kayit',
+                  isLoadingTodayRecordCount ? '...' : '$todayRecordCount kayıt',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

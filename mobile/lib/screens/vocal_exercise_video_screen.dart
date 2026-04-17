@@ -8,6 +8,7 @@ import '../models/pitch_reading.dart';
 import '../services/live_pitch_tracker.dart';
 import '../theme/app_theme.dart';
 import '../widgets/live_pitch_chart.dart';
+import 'vocal_measurement_screen.dart';
 import 'warmup_exercise.dart';
 
 class VocalExerciseVideoScreen extends StatefulWidget {
@@ -263,6 +264,17 @@ class _VocalExerciseVideoScreenState extends State<VocalExerciseVideoScreen> {
                       const SizedBox(height: 20),
                       _HowToSection(
                         text: widget.exercise.howToText!,
+                        showMeasurementButton:
+                            widget.exercise.supportsMeasurement,
+                        onMeasurementTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => VocalMeasurementScreen(
+                                exercise: widget.exercise,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                     const SizedBox(height: 28),
@@ -577,9 +589,13 @@ class _VideoPlaceholder extends StatelessWidget {
 class _HowToSection extends StatelessWidget {
   const _HowToSection({
     required this.text,
+    this.showMeasurementButton = false,
+    this.onMeasurementTap,
   });
 
   final String text;
+  final bool showMeasurementButton;
+  final VoidCallback? onMeasurementTap;
 
   @override
   Widget build(BuildContext context) {
@@ -648,6 +664,25 @@ class _HowToSection extends StatelessWidget {
                       ],
                     ),
                   ),
+                if (showMeasurementButton) ...[
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: onMeasurementTap,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.buttonPrimary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      icon: const Icon(Icons.task_alt_rounded, size: 20),
+                      label: const Text('Ölçüm yap'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -23,6 +23,8 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
       iconAssetPath: 'assets/icons/vocal_function/wind.svg',
       videoCropTopFraction: 312 / 848,
       videoCropHeightFraction: 224 / 848,
+      supportsMeasurement: true,
+      measurementInstruction: '"/i/" sesini nefesiniz yettiği kadar uzatın.',
       howToText:
           'Derin bir diyafram nefesi alın. En rahat olduğunuz ses tonunuzda, "/i/" sesini nefesiniz yettiği kadar uzatın. Sesi sürdürürken boğazınızı sıkmadığınızdan emin olun. Bu egzersiz, sesi ısıtmak için yapılmaktadır. Bu egzersiz süre takibi ile yapılır. Uzatma süreniz kayıt altına alınır. Performansınız süreye göre izlenir.',
     ),
@@ -65,6 +67,9 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
       iconAssetPath: 'assets/icons/vocal_function/trend-up-bold.svg',
       videoCropTopFraction: 272 / 848,
       videoCropHeightFraction: 304 / 848,
+      supportsMeasurement: true,
+      measurementInstruction:
+          'en rahat ve en ince (tiz) ses tonuyla sesi uzatın.',
       howToText:
           'Derin bir nefes alın. Çıkarabildiğiniz en rahat ve en ince (tiz) ses tonuyla, sesi kesintisiz bir şekilde uzatabildiğiniz kadar uzatın. Sesi sürdürürken boğazınızı sıkmadığınızdan emin olun.  Bu egzersiz süre takibi ile yapılır. Uzatma süreniz kayıt altına alınır. Performansınız süreye göre izlenir.',
     ),
@@ -79,6 +84,9 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
       iconAssetPath: 'assets/icons/vocal_function/waveform-bold.svg',
       videoCropTopFraction: 266 / 832,
       videoCropHeightFraction: 304 / 832,
+      supportsMeasurement: true,
+      measurementInstruction:
+          'normal konuşma tonunuzdaki sesi kesintisiz şekilde uzatın.',
       howToText:
           'Derin bir nefes alın. En rahat, günlük konuşma tonunuzdaki (normal) sesle, sesi kesintisiz bir şekilde uzatabildiğiniz kadar uzatın. Sesi sürdürürken boğazınızı sıkmadığınızdan emin olun.  Bu egzersiz süre takibi ile yapılır. Uzatma süreniz kayıt altına alınır. Performansınız süreye göre izlenir.',
     ),
@@ -93,6 +101,9 @@ class VocalFunctionExercisesScreen extends StatelessWidget {
       iconAssetPath: 'assets/icons/vocal_function/trend-down-bold.svg',
       videoCropTopFraction: 272 / 848,
       videoCropHeightFraction: 304 / 848,
+      supportsMeasurement: true,
+      measurementInstruction:
+          'en rahat ve en kalın (pes) ses tonuyla sesi uzatın.',
       howToText:
           'Derin bir nefes alın. Çıkarabildiğiniz en rahat ve en kalın (pes) ses tonuyla, sesi kesintisiz bir şekilde uzatabildiğiniz kadar uzatın. Sesi sürdürürken boğazınızı sıkmadığınızdan emin olun. Bu egzersiz süre takibi ile yapılır. Uzatma süreniz kayıt altına alınır. Performansınız süreye göre izlenir.',
     ),

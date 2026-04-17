@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import 'home_screen.dart';
+import 'progress_screen.dart';
 import 'profile_screen.dart';
 import 'voice_analyze_consent_screen.dart';
 import 'auth_screen.dart';
@@ -20,20 +21,23 @@ class _AppShellScreenState extends State<AppShellScreen> {
   int _selectedIndex = 1;
   late final Future<void> _authInitFuture;
 
-  static const List<Widget> _authenticatedTabs = [
-    VoiceAnalyzeConsentScreen(),
-    HomeScreen(),
-    ProfileScreen(),
-  ];
-
-  static const List<Widget> _guestTabs = [
-    VoiceAnalyzeConsentScreen(),
-    HomeScreen(),
-  ];
-
   List<Widget> get _tabs {
     final isAuthenticated = AuthService.instance.currentUser != null;
-    return isAuthenticated ? _authenticatedTabs : _guestTabs;
+    if (!isAuthenticated) {
+      return const [
+        VoiceAnalyzeConsentScreen(),
+        HomeScreen(),
+      ];
+    }
+
+    return [
+      const VoiceAnalyzeConsentScreen(),
+      const HomeScreen(),
+      ProgressScreen(
+        onBackPressed: () => _onTabSelected(1),
+      ),
+      const ProfileScreen(),
+    ];
   }
 
   @override

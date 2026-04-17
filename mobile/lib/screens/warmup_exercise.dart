@@ -15,6 +15,8 @@ class WarmupExercise {
     this.iconAssetPath,
     this.durationLabel,
     this.howToText,
+    this.measurementInstruction,
+    this.supportsMeasurement = false,
   });
 
   final String titleTr;
@@ -30,4 +32,6 @@ class WarmupExercise {
   final String? iconAssetPath;
   final String? durationLabel;
   final String? howToText;
+  final String? measurementInstruction;
+  final bool supportsMeasurement;
 }

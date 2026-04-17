@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
@@ -37,6 +38,11 @@ class AppBottomNavigationBar extends StatelessWidget {
       semanticLabel: 'Ana sayfa',
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
+    ),
+    _BottomNavigationItemData(
+      label: 'İlerleme',
+      semanticLabel: 'İlerleme',
+      iconAssetPath: 'assets/branding/calendar-check-bold.svg',
     ),
     _BottomNavigationItemData(
       label: 'Profil',
@@ -108,12 +114,12 @@ class _BottomNavigationAction extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isSelected ? item.activeIcon : item.icon,
-                size: 24,
-                color: isSelected ? selectedColor : AppTheme.textMuted,
+              _BottomNavigationIcon(
+                item: item,
+                isSelected: isSelected,
+                selectedColor: selectedColor,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               Text(
                 item.label,
                 maxLines: 2,
@@ -136,13 +142,47 @@ class _BottomNavigationAction extends StatelessWidget {
 class _BottomNavigationItemData {
   const _BottomNavigationItemData({
     required this.label,
-    required this.icon,
-    required this.activeIcon,
     required this.semanticLabel,
+    this.icon,
+    this.activeIcon,
+    this.iconAssetPath,
   });
 
   final String label;
-  final IconData icon;
-  final IconData activeIcon;
+  final IconData? icon;
+  final IconData? activeIcon;
   final String semanticLabel;
+  final String? iconAssetPath;
+}
+
+class _BottomNavigationIcon extends StatelessWidget {
+  const _BottomNavigationIcon({
+    required this.item,
+    required this.isSelected,
+    required this.selectedColor,
+  });
+
+  final _BottomNavigationItemData item;
+  final bool isSelected;
+  final Color selectedColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSelected ? selectedColor : AppTheme.textMuted;
+
+    if (item.iconAssetPath != null) {
+      return SvgPicture.asset(
+        item.iconAssetPath!,
+        width: 24,
+        height: 24,
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      );
+    }
+
+    return Icon(
+      isSelected ? item.activeIcon : item.icon,
+      size: 24,
+      color: color,
+    );
+  }
 }

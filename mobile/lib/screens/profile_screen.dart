@@ -81,7 +81,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     _ProfileHeaderCard(
                       fullName: fullName,
-                      lastSessionDate: _buildLastSessionLabel(data),
                       onEditPressed: user == null ? null : _openSettings,
                     ),
                     const SizedBox(height: 18),
@@ -111,19 +110,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (_) => const SettingsScreen(),
       ),
     );
-  }
-
-  String _buildLastSessionLabel(_ProfileData data) {
-    final candidates = <DateTime>[];
-    candidates.addAll(data.measurements.map((item) => item.createdAt));
-    candidates.addAll(data.questionnaires.map((item) => item.createdAt));
-
-    if (candidates.isEmpty) {
-      return 'Son seans: Kayıt bulunmuyor';
-    }
-
-    candidates.sort((a, b) => b.compareTo(a));
-    return 'Son seans: ${formatAppDate(candidates.first)}';
   }
 
   List<Widget> _buildActiveContent(_ProfileData data) {
@@ -403,12 +389,10 @@ class _ProfileData {
 class _ProfileHeaderCard extends StatelessWidget {
   const _ProfileHeaderCard({
     required this.fullName,
-    required this.lastSessionDate,
     required this.onEditPressed,
   });
 
   final String fullName;
-  final String lastSessionDate;
   final VoidCallback? onEditPressed;
 
   @override
@@ -467,17 +451,9 @@ class _ProfileHeaderCard extends StatelessWidget {
                   fullName,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textPrimary,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  lastSessionDate,
-                  style: const TextStyle(
-                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                     color: AppTheme.textMuted,
+                    letterSpacing: -0.3,
                   ),
                 ),
               ],
@@ -488,7 +464,7 @@ class _ProfileHeaderCard extends StatelessWidget {
             splashRadius: 22,
             icon: const Icon(
               Icons.settings_outlined,
-              color: AppTheme.textPrimary,
+              color: AppTheme.textMuted,
             ),
           ),
         ],

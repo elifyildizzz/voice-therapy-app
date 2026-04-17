@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
+  static const Color brandGreen = Color(0xFF4C766A);
   static const Color primary = Color(0xFF2F5D50);
   static const Color pressed = Color(0xFF254A40);
   static const Color light = Color(0xFF5E867B);
-  static const Color buttonPrimary = Color(0xFF4C766A);
+  static const Color buttonPrimary = brandGreen;
   static const Color buttonPressed = Color(0xFF3F6258);
   static const Color soft = Color(0xFFE8F2EC);
   static const Color primarySoft = soft;
@@ -12,7 +13,7 @@ class AppTheme {
   static const Color card = Color(0xFFFFFFFF);
   static const Color headerStart = Color(0xFF8EA684);
   static const Color headerEnd = Color(0xFF6F8F69);
-  static const Color homeAccent = Color(0xFF4D6B57);
+  static const Color homeAccent = brandGreen;
   static const Color homeCard = Color(0xFFDCE7D4);
   static const Color homeIconBackground = Color(0xFFE6F0E6);
   static const Color terracotta = Color(0xFFD98371);
@@ -21,7 +22,7 @@ class AppTheme {
   static const Color textMuted = Color(0xFF374151);
   static const Color cardBorder = Color(0xFFE5E7EB);
   static const Color iconBg = soft;
-  static const Color darkBlue = primary;
+  static const Color darkBlue = brandGreen;
   static const Color lightBlue = light;
 
   static List<BoxShadow> get softShadow => const [

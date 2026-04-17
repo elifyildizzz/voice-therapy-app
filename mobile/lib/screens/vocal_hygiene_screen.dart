@@ -327,7 +327,7 @@ class _TopicAccordionCard extends StatelessWidget {
                       child: Center(
                         child: Icon(
                           item.icon,
-                          color: const Color(0xFF788A59),
+                          color: AppTheme.buttonPrimary,
                           size: 26,
                         ),
                       ),
@@ -351,7 +351,7 @@ class _TopicAccordionCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 13,
                               height: 1.35,
-                              color: AppTheme.textMuted,
+                              color: AppTheme.textPrimary,
                             ),
                           ),
                         ],
@@ -362,7 +362,7 @@ class _TopicAccordionCard extends StatelessWidget {
                       isExpanded
                           ? Icons.keyboard_arrow_down_rounded
                           : Icons.chevron_right_rounded,
-                      color: const Color(0xFF788A59),
+                      color: AppTheme.buttonPrimary,
                       size: 30,
                     ),
                   ],
@@ -421,7 +421,7 @@ class _TopicAccordionCard extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 13,
                                     height: 1.35,
-                                    color: AppTheme.textMuted,
+                                    color: AppTheme.textPrimary,
                                   ),
                                 ),
                               ),
@@ -476,7 +476,7 @@ class _RetakeTestCard extends StatelessWidget {
                 padding: EdgeInsets.only(top: 1),
                 child: Icon(
                   Icons.autorenew_rounded,
-                  color: Color(0xFF788A59),
+                  color: AppTheme.buttonPrimary,
                   size: 24,
                 ),
               ),
@@ -500,10 +500,11 @@ class _RetakeTestCard extends StatelessWidget {
             child: FilledButton(
               onPressed: onPressed,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFE2EEE3),
-                foregroundColor: AppTheme.homeAccent,
-                disabledBackgroundColor: const Color(0xFFDCE7D6),
-                disabledForegroundColor: AppTheme.homeAccent,
+                backgroundColor: AppTheme.buttonPrimary,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor:
+                    AppTheme.buttonPrimary.withValues(alpha: 0.45),
+                disabledForegroundColor: Colors.white.withValues(alpha: 0.8),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(

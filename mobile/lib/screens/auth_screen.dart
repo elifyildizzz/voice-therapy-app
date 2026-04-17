@@ -218,10 +218,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             onSelectRegister: () => _switchMode(false),
                           ),
                           const SizedBox(height: 22),
-                          Visibility(
-                            visible: _isLoginMode,
-                            maintainState: true,
-                            child: _LoginForm(
+                          if (_isLoginMode)
+                            _LoginForm(
                               key: const ValueKey<String>('login'),
                               formKey: _loginFormKey,
                               emailController: _loginEmailController,
@@ -230,12 +228,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               validateEmail: _validateEmail,
                               validatePassword: _validatePassword,
                               onSubmit: _submitLogin,
-                            ),
-                          ),
-                          Visibility(
-                            visible: !_isLoginMode,
-                            maintainState: true,
-                            child: _RegisterForm(
+                            )
+                          else
+                            _RegisterForm(
                               key: const ValueKey<String>('register'),
                               formKey: _registerFormKey,
                               emailController: _registerEmailController,
@@ -249,7 +244,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               validatePassword: _validatePassword,
                               onSubmit: _submitRegister,
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -360,6 +354,8 @@ class _LoginForm extends StatelessWidget {
             label: 'E-posta',
             hintText: 'ornek@email.com',
             keyboardType: TextInputType.emailAddress,
+            autocorrect: false,
+            enableSuggestions: false,
             textInputAction: TextInputAction.next,
             validator: validateEmail,
           ),
@@ -369,6 +365,8 @@ class _LoginForm extends StatelessWidget {
             label: 'Şifre',
             hintText: '........',
             obscureText: true,
+            autocorrect: false,
+            enableSuggestions: false,
             textInputAction: TextInputAction.done,
             validator: validatePassword,
             onFieldSubmitted: (_) => onSubmit(),
@@ -455,6 +453,8 @@ class _RegisterForm extends StatelessWidget {
             label: 'E-posta',
             hintText: 'ornek@email.com',
             keyboardType: TextInputType.emailAddress,
+            autocorrect: false,
+            enableSuggestions: false,
             textInputAction: TextInputAction.next,
             validator: validateEmail,
           ),
@@ -464,6 +464,8 @@ class _RegisterForm extends StatelessWidget {
             label: 'Şifre',
             hintText: '........',
             obscureText: true,
+            autocorrect: false,
+            enableSuggestions: false,
             textInputAction: TextInputAction.next,
             validator: validatePassword,
           ),
@@ -473,6 +475,8 @@ class _RegisterForm extends StatelessWidget {
             label: 'Şifre Tekrar',
             hintText: '........',
             obscureText: true,
+            autocorrect: false,
+            enableSuggestions: false,
             textInputAction: TextInputAction.done,
             validator: (value) {
               final passwordError = validatePassword(value);
@@ -514,6 +518,8 @@ class _AuthField extends StatefulWidget {
     this.hintText,
     this.keyboardType,
     this.obscureText = false,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
     this.textInputAction,
     this.onFieldSubmitted,
   });
@@ -524,6 +530,8 @@ class _AuthField extends StatefulWidget {
   final String? hintText;
   final TextInputType? keyboardType;
   final bool obscureText;
+  final bool autocorrect;
+  final bool enableSuggestions;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
 
@@ -540,6 +548,8 @@ class _AuthFieldState extends State<_AuthField> {
       controller: widget.controller,
       keyboardType: widget.keyboardType,
       obscureText: _isObscured,
+      autocorrect: widget.autocorrect,
+      enableSuggestions: widget.enableSuggestions,
       textInputAction: widget.textInputAction,
       validator: widget.validator,
       onFieldSubmitted: widget.onFieldSubmitted,

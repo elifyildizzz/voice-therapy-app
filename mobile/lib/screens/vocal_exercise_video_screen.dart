@@ -734,41 +734,41 @@ class _LivePitchSection extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         LivePitchChart(points: points),
-        const SizedBox(height: 14),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              currentHz == null
-                  ? '-- Hz'
-                  : '${currentHz!.toStringAsFixed(1)} Hz',
+        if (currentHz != null) ...[
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '${currentHz!.toStringAsFixed(1)} Hz',
               style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
                 color: AppTheme.primary,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: isBusy ? null : onToggle,
-                style: FilledButton.styleFrom(
-                  backgroundColor: isListening
-                      ? AppTheme.terracotta
-                      : AppTheme.buttonPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 13,
-                  ),
+          ),
+        ],
+        const SizedBox(height: 14),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FilledButton.icon(
+              onPressed: isBusy ? null : onToggle,
+              style: FilledButton.styleFrom(
+                backgroundColor:
+                    isListening ? AppTheme.terracotta : AppTheme.buttonPrimary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 13,
                 ),
-                icon: Icon(
-                  isListening
-                      ? Icons.stop_circle_outlined
-                      : Icons.mic_none_rounded,
-                ),
-                label: Text(
-                  isListening ? 'Durdur' : 'Başlat',
-                ),
+              ),
+              icon: Icon(
+                isListening
+                    ? Icons.stop_circle_outlined
+                    : Icons.mic_none_rounded,
+              ),
+              label: Text(
+                isListening ? 'Durdur' : 'Başlat',
               ),
             ),
           ],

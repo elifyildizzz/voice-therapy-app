@@ -383,17 +383,18 @@ class _ScaleChoice extends StatelessWidget {
           height: 42,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.darkBlue : AppTheme.card,
+            color: isSelected ? AppTheme.buttonPrimary : AppTheme.card,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
-              color: isSelected ? AppTheme.darkBlue : const Color(0xFFD2DFCE),
+              color:
+                  isSelected ? AppTheme.buttonPrimary : const Color(0xFFD2DFCE),
             ),
             boxShadow: isSelected
-                ? const [
+                ? [
                     BoxShadow(
-                      color: Color(0x1A2F5D50),
+                      color: AppTheme.buttonPrimary.withValues(alpha: 0.18),
                       blurRadius: 10,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ]
                 : const [],

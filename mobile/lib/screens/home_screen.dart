@@ -13,7 +13,7 @@ import 'vocal_hygiene_onboarding_screen.dart';
 import 'vocal_hygiene_screen.dart';
 import 'voice_assessment_tests_screen.dart';
 
-const Color _homeAccentGreen = Color(0xFF4D6B57);
+const Color _homeAccentGreen = AppTheme.buttonPrimary;
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -187,7 +187,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         _CategoryTile(
-                          icon: Icons.music_note_rounded,
+                          icon: Icons.multitrack_audio_rounded,
                           title: 'Vokal Fonksiyon',
                           subtitle: 'Ses üretimi ve teknik çalışma',
                           onTap: () {

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -113,7 +112,7 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
         ),
         child: Column(
           children: [
-            const _MeasurementHeader(),
+            _MeasurementHeader(title: widget.exercise.titleEn),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
@@ -244,7 +243,11 @@ class _VocalMeasurementScreenState extends State<VocalMeasurementScreen> {
 }
 
 class _MeasurementHeader extends StatelessWidget {
-  const _MeasurementHeader();
+  const _MeasurementHeader({
+    required this.title,
+  });
+
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -272,9 +275,9 @@ class _MeasurementHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Süre Ölçümü',
-            style: TextStyle(
+          Text(
+            title,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.3,
@@ -458,11 +461,6 @@ class _DailyRecordsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final first = records.isNotEmpty ? records[0].duration : null;
     final second = records.length > 1 ? records[1].duration : null;
-    final maxSeconds = [
-      first?.inSeconds ?? 0,
-      second?.inSeconds ?? 0,
-      1,
-    ].reduce(math.max).toDouble();
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
@@ -477,34 +475,20 @@ class _DailyRecordsCard extends StatelessWidget {
           const Text(
             'Bugünkü Ölçümler',
             style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
             ),
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            height: 146,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: _MeasurementBar(
-                    label: 'İlk ölçüm',
-                    duration: first,
-                    maxSeconds: maxSeconds,
-                  ),
-                ),
-                const SizedBox(width: 18),
-                Expanded(
-                  child: _MeasurementBar(
-                    label: 'İkinci ölçüm',
-                    duration: second,
-                    maxSeconds: maxSeconds,
-                  ),
-                ),
-              ],
-            ),
+          _MeasurementRow(
+            label: '1. Ölçüm',
+            duration: first,
+          ),
+          const SizedBox(height: 8),
+          _MeasurementRow(
+            label: '2. Ölçüm',
+            duration: second,
           ),
         ],
       ),
@@ -512,85 +496,36 @@ class _DailyRecordsCard extends StatelessWidget {
   }
 }
 
-class _MeasurementBar extends StatelessWidget {
-  const _MeasurementBar({
+class _MeasurementRow extends StatelessWidget {
+  const _MeasurementRow({
     required this.label,
     required this.duration,
-    required this.maxSeconds,
   });
 
   final String label;
   final Duration? duration;
-  final double maxSeconds;
 
   @override
   Widget build(BuildContext context) {
-    final seconds = duration?.inSeconds.toDouble() ?? 0;
-    final ratio =
-        duration == null ? 0.12 : (seconds / maxSeconds).clamp(0.18, 1.0);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Row(
       children: [
-        Text(
-          duration == null ? 'Ölçüm yapılmadı' : _formatDuration(duration!),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: duration == null ? AppTheme.textMuted : AppTheme.textPrimary,
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textMuted,
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-        Expanded(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F6F2),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFEEE7DE)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        width: 34,
-                        height: 84 * ratio,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: duration == null
-                                ? const [
-                                    Color(0xFFE9E3DB),
-                                    Color(0xFFD9D2C9),
-                                  ]
-                                : const [
-                                    Color(0xFFC9D9F0),
-                                    Color(0xFF88AAD8),
-                                  ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        const SizedBox(width: 12),
+        Text(
+          duration != null ? _formatDuration(duration!) : '-',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
         ),
       ],
@@ -598,9 +533,8 @@ class _MeasurementBar extends StatelessWidget {
   }
 
   String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes.toString().padLeft(2, '0');
-    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+    final totalSeconds = duration.inMilliseconds / 1000;
+    return '${totalSeconds.toStringAsFixed(1)} sn';
   }
 }
 

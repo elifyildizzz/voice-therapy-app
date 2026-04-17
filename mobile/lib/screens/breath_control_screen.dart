@@ -31,10 +31,14 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
   bool _isRecording = false;
   bool _isStopping = false;
   bool _stopAfterStart = false;
+  bool _hasUnsavedMeasurement = false;
   double _elapsedSeconds = 0;
   double _bestSeconds = 0;
   _BreathControlStep _currentStep = _BreathControlStep.diaphragm;
   final List<_PhonationAttempt> _attempts = <_PhonationAttempt>[];
+
+  List<_BreathMeasurementRecord> get _savedRecords =>
+      _BreathMeasurementDraftStore.recordsForToday('maximum_a_phonation');
 
   Future<void> _startRecording() async {
     if (_isStarting || _isRecording || _isStopping) {
@@ -95,6 +99,7 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
         _isStarting = false;
         _isRecording = true;
         _elapsedSeconds = 0;
+        _hasUnsavedMeasurement = false;
       });
 
       if (_stopAfterStart) {
@@ -162,6 +167,7 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
       _isRecording = false;
       _isStopping = false;
       _elapsedSeconds = roundedSeconds;
+      _hasUnsavedMeasurement = roundedSeconds > 0;
       _attempts.add(attempt);
       if (isNewBest) {
         _bestSeconds = roundedSeconds;
@@ -177,6 +183,35 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
     setState(() {
       _currentStep = _BreathControlStep.recording;
     });
+  }
+
+  void _resetMeasurement() {
+    if (_isRecording || _isStarting || _isStopping) {
+      return;
+    }
+
+    setState(() {
+      _elapsedSeconds = 0;
+      _hasUnsavedMeasurement = false;
+    });
+  }
+
+  void _saveMeasurement() {
+    final duration = Duration(milliseconds: (_elapsedSeconds * 1000).round());
+    final slot = _BreathMeasurementDraftStore.saveToday(
+      exerciseKey: 'maximum_a_phonation',
+      duration: duration,
+    );
+
+    if (slot == null) {
+      _showMessage('Bugün için iki ölçüm zaten kaydedildi.');
+      return;
+    }
+
+    _showMessage(
+      slot == 1 ? 'İlk ölçüm kaydedildi.' : 'İkinci ölçüm kaydedildi.',
+    );
+    _resetMeasurement();
   }
 
   Future<void> _goToDiaphragmStep() async {
@@ -235,6 +270,11 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
             ? 'Rahat tonda /a/ sesini sürdür, zorlanınca bırak.'
             : 'Hazır olduğunda butona basılı tut ve /a/ sesini uzat.';
     final lastSeconds = _attempts.isNotEmpty ? _attempts.last.seconds : 0.0;
+    final canSave = !_isRecording &&
+        !_isStarting &&
+        !_isStopping &&
+        _hasUnsavedMeasurement &&
+        _elapsedSeconds > 0;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -287,6 +327,106 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
                       _RecordingSummaryCard(
                         bestSeconds: _bestSeconds,
                         lastSeconds: lastSeconds,
+                      ),
+                      const SizedBox(height: 14),
+                      _DailyBreathRecordsCard(records: _savedRecords),
+                      const SizedBox(height: 10),
+                      const Text(
+                        '* Günde iki ölçüm kaydı yapabilirsiniz.',
+                        textAlign: TextAlign.start,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(999),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x140F1B16),
+                                    blurRadius: 16,
+                                    offset: Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: OutlinedButton(
+                                onPressed: _resetMeasurement,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.textPrimary,
+                                  side: const BorderSide(
+                                    color: Color(0xFFECE7E0),
+                                  ),
+                                  backgroundColor: Colors.transparent,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Tekrar Dene',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(999),
+                                color: canSave
+                                    ? AppTheme.buttonPrimary
+                                    : AppTheme.buttonPrimary.withValues(
+                                        alpha: 0.45,
+                                      ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x140F1B16),
+                                    blurRadius: 16,
+                                    offset: Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: FilledButton(
+                                onPressed: canSave ? _saveMeasurement : null,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  disabledBackgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  surfaceTintColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  disabledForegroundColor:
+                                      Colors.white.withValues(alpha: 0.8),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Kaydet',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
@@ -646,4 +786,144 @@ class _PhonationAttempt {
   final double seconds;
 }
 
+class _DailyBreathRecordsCard extends StatelessWidget {
+  const _DailyBreathRecordsCard({
+    required this.records,
+  });
+
+  final List<_BreathMeasurementRecord> records;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = records.isNotEmpty ? records[0].duration : null;
+    final second = records.length > 1 ? records[1].duration : null;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Bugünkü Ölçümler',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _BreathMeasurementRow(
+            label: '1. Ölçüm',
+            duration: first,
+          ),
+          const SizedBox(height: 8),
+          _BreathMeasurementRow(
+            label: '2. Ölçüm',
+            duration: second,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BreathMeasurementRow extends StatelessWidget {
+  const _BreathMeasurementRow({
+    required this.label,
+    required this.duration,
+  });
+
+  final String label;
+  final Duration? duration;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textMuted,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          duration != null ? _formatBreathDuration(duration!) : '-',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BreathMeasurementRecord {
+  const _BreathMeasurementRecord({
+    required this.duration,
+    required this.savedAt,
+  });
+
+  final Duration duration;
+  final DateTime savedAt;
+}
+
+class _BreathMeasurementDraftStore {
+  static final Map<String, List<_BreathMeasurementRecord>> _recordsByKey =
+      <String, List<_BreathMeasurementRecord>>{};
+
+  static List<_BreathMeasurementRecord> recordsForToday(String exerciseKey) {
+    final today = DateTime.now();
+    return List<_BreathMeasurementRecord>.unmodifiable(
+      (_recordsByKey[exerciseKey] ?? <_BreathMeasurementRecord>[])
+          .where((record) => _isSameDay(record.savedAt, today))
+          .toList(),
+    );
+  }
+
+  static int? saveToday({
+    required String exerciseKey,
+    required Duration duration,
+  }) {
+    final todayRecords = recordsForToday(exerciseKey);
+    if (todayRecords.length >= 2) {
+      return null;
+    }
+
+    final allRecords = _recordsByKey.putIfAbsent(
+      exerciseKey,
+      () => <_BreathMeasurementRecord>[],
+    );
+    allRecords.add(
+      _BreathMeasurementRecord(
+        duration: duration,
+        savedAt: DateTime.now(),
+      ),
+    );
+    return todayRecords.length + 1;
+  }
+
+  static bool _isSameDay(DateTime left, DateTime right) {
+    return left.year == right.year &&
+        left.month == right.month &&
+        left.day == right.day;
+  }
+}
+
 String _formatSeconds(double seconds) => '${seconds.toStringAsFixed(1)} sn';
+
+String _formatBreathDuration(Duration duration) {
+  final totalSeconds = duration.inMilliseconds / 1000;
+  return '${totalSeconds.toStringAsFixed(1)} sn';
+}

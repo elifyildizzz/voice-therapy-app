@@ -17,6 +17,7 @@ class ClientFormScreen extends StatefulWidget {
 
 class _ClientFormScreenState extends State<ClientFormScreen> {
   final ClientFormRepository _repository = ClientFormRepository.instance;
+  final ScrollController _scrollController = ScrollController();
 
   final Map<String, int> _responses = <String, int>{};
 
@@ -31,6 +32,12 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _saveForm() async {
@@ -58,6 +65,7 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
       setState(() {
         _savedRecord = savedRecord;
       });
+      _scrollToResultCard();
     } catch (_) {
       if (!mounted) {
         return;
@@ -75,6 +83,20 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
         });
       }
     }
+  }
+
+  void _scrollToResultCard() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) {
+        return;
+      }
+      final targetOffset = _scrollController.position.maxScrollExtent;
+      _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   void _selectAnswer(String fieldKey, int value) {
@@ -100,6 +122,7 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
             ),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

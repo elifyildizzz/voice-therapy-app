@@ -354,9 +354,11 @@ class _LoginForm extends StatelessWidget {
             label: 'E-posta',
             hintText: 'ornek@email.com',
             keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
             autocorrect: false,
             enableSuggestions: false,
-            textInputAction: TextInputAction.next,
+            smartDashesType: SmartDashesType.disabled,
+            smartQuotesType: SmartQuotesType.disabled,
             validator: validateEmail,
           ),
           const SizedBox(height: 14),
@@ -365,9 +367,11 @@ class _LoginForm extends StatelessWidget {
             label: 'Şifre',
             hintText: '........',
             obscureText: true,
+            textInputAction: TextInputAction.done,
             autocorrect: false,
             enableSuggestions: false,
-            textInputAction: TextInputAction.done,
+            smartDashesType: SmartDashesType.disabled,
+            smartQuotesType: SmartQuotesType.disabled,
             validator: validatePassword,
             onFieldSubmitted: (_) => onSubmit(),
           ),
@@ -453,9 +457,11 @@ class _RegisterForm extends StatelessWidget {
             label: 'E-posta',
             hintText: 'ornek@email.com',
             keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
             autocorrect: false,
             enableSuggestions: false,
-            textInputAction: TextInputAction.next,
+            smartDashesType: SmartDashesType.disabled,
+            smartQuotesType: SmartQuotesType.disabled,
             validator: validateEmail,
           ),
           const SizedBox(height: 14),
@@ -464,9 +470,11 @@ class _RegisterForm extends StatelessWidget {
             label: 'Şifre',
             hintText: '........',
             obscureText: true,
+            textInputAction: TextInputAction.next,
             autocorrect: false,
             enableSuggestions: false,
-            textInputAction: TextInputAction.next,
+            smartDashesType: SmartDashesType.disabled,
+            smartQuotesType: SmartQuotesType.disabled,
             validator: validatePassword,
           ),
           const SizedBox(height: 14),
@@ -475,9 +483,11 @@ class _RegisterForm extends StatelessWidget {
             label: 'Şifre Tekrar',
             hintText: '........',
             obscureText: true,
+            textInputAction: TextInputAction.done,
             autocorrect: false,
             enableSuggestions: false,
-            textInputAction: TextInputAction.done,
+            smartDashesType: SmartDashesType.disabled,
+            smartQuotesType: SmartQuotesType.disabled,
             validator: (value) {
               final passwordError = validatePassword(value);
               if (passwordError != null) {
@@ -522,6 +532,8 @@ class _AuthField extends StatefulWidget {
     this.enableSuggestions = true,
     this.textInputAction,
     this.onFieldSubmitted,
+    this.smartDashesType,
+    this.smartQuotesType,
   });
 
   final TextEditingController controller;
@@ -534,6 +546,8 @@ class _AuthField extends StatefulWidget {
   final bool enableSuggestions;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
+  final SmartDashesType? smartDashesType;
+  final SmartQuotesType? smartQuotesType;
 
   @override
   State<_AuthField> createState() => _AuthFieldState();
@@ -553,6 +567,8 @@ class _AuthFieldState extends State<_AuthField> {
       textInputAction: widget.textInputAction,
       validator: widget.validator,
       onFieldSubmitted: widget.onFieldSubmitted,
+      smartDashesType: widget.smartDashesType,
+      smartQuotesType: widget.smartQuotesType,
       decoration: InputDecoration(
         labelText: widget.label,
         hintText: widget.hintText,

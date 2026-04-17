@@ -734,31 +734,28 @@ class _LivePitchSection extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         LivePitchChart(points: points),
-        if (currentHz != null) ...[
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              '${currentHz!.toStringAsFixed(1)} Hz',
+        const SizedBox(height: 14),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              currentHz == null
+                  ? '-- Hz'
+                  : '${currentHz!.toStringAsFixed(1)} Hz',
               style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                fontWeight: FontWeight.w400,
                 color: AppTheme.primary,
               ),
             ),
-          ),
-        ],
-        const SizedBox(height: 14),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
+            const Spacer(),
             FilledButton.icon(
               onPressed: isBusy ? null : onToggle,
               style: FilledButton.styleFrom(
-                backgroundColor:
-                    isListening ? AppTheme.terracotta : AppTheme.buttonPrimary,
+                backgroundColor: AppTheme.buttonPrimary,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
+                  horizontal: 12,
                   vertical: 13,
                 ),
               ),

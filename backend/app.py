@@ -5,10 +5,12 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+import logging
 
 from bson import ObjectId
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
 from jose import JWTError, jwt
 from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
@@ -31,6 +33,10 @@ JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 30))
 )
+ALLOW_DEGRADED_STARTUP = (
+    os.getenv("ALLOW_DEGRADED_STARTUP", "true").strip().lower()
+    in {"1", "true", "yes", "on"}
+)
 
 mongo_client = AsyncIOMotorClient(MONGODB_URI)
 database = mongo_client[MONGODB_DB_NAME]
@@ -43,6 +49,9 @@ measurement_records_collection = database["measurement_records"]
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI(title="Voice Therapy Backend", version="1.0.0")
+logger = logging.getLogger(__name__)
+db_ready = False
+db_startup_error: str | None = None
 
 
 class RegisterRequest(BaseModel):
@@ -105,35 +114,45 @@ class NotificationProfileUpdate(BaseModel):
 
 @app.on_event("startup")
 async def startup() -> None:
-    await mongo_client.admin.command("ping")
-    collection_names = await database.list_collection_names()
-    for collection_name in (
-        "users",
-        "vocal_hygiene_responses",
-        "client_form_records",
-        "sz_test_records",
-        "notification_profiles",
-        "measurement_records",
-    ):
-        if collection_name not in collection_names:
-            await database.create_collection(collection_name)
-    await users_collection.create_index("email", unique=True)
-    await vocal_hygiene_responses_collection.create_index(
-        [("user_id", 1), ("created_at", -1)]
-    )
-    await client_form_records_collection.create_index(
-        [("user_id", 1), ("created_at", -1)]
-    )
-    await sz_test_records_collection.create_index(
-        [("user_id", 1), ("created_at", -1)]
-    )
-    await notification_profiles_collection.create_index("user_id", unique=True)
-    await measurement_records_collection.create_index(
-        [("user_id", 1), ("client_date", -1), ("created_at", -1)]
-    )
-    await measurement_records_collection.create_index(
-        [("user_id", 1), ("module", 1), ("exercise_key", 1), ("client_date", 1)]
-    )
+    global db_ready, db_startup_error
+    try:
+        await mongo_client.admin.command("ping")
+        collection_names = await database.list_collection_names()
+        for collection_name in (
+            "users",
+            "vocal_hygiene_responses",
+            "client_form_records",
+            "sz_test_records",
+            "notification_profiles",
+            "measurement_records",
+        ):
+            if collection_name not in collection_names:
+                await database.create_collection(collection_name)
+        await users_collection.create_index("email", unique=True)
+        await vocal_hygiene_responses_collection.create_index(
+            [("user_id", 1), ("created_at", -1)]
+        )
+        await client_form_records_collection.create_index(
+            [("user_id", 1), ("created_at", -1)]
+        )
+        await sz_test_records_collection.create_index(
+            [("user_id", 1), ("created_at", -1)]
+        )
+        await notification_profiles_collection.create_index("user_id", unique=True)
+        await measurement_records_collection.create_index(
+            [("user_id", 1), ("client_date", -1), ("created_at", -1)]
+        )
+        await measurement_records_collection.create_index(
+            [("user_id", 1), ("module", 1), ("exercise_key", 1), ("client_date", 1)]
+        )
+        db_ready = True
+        db_startup_error = None
+    except Exception as exc:
+        db_ready = False
+        db_startup_error = str(exc)
+        logger.exception("MongoDB startup failed")
+        if not ALLOW_DEGRADED_STARTUP:
+            raise
 
 
 @app.on_event("shutdown")
@@ -143,7 +162,31 @@ async def shutdown() -> None:
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok", "database": MONGODB_DB_NAME}
+    return {
+        "status": "ok" if db_ready else "degraded",
+        "database": MONGODB_DB_NAME,
+        "db_ready": db_ready,
+        "db_error": db_startup_error,
+    }
+
+
+@app.middleware("http")
+async def reject_requests_when_db_unavailable(
+    request: Request,
+    call_next,
+):
+    if db_ready or request.url.path == "/health":
+        return await call_next(request)
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": (
+                "Veritabani baglantisi kurulamadi. "
+                "Lutfen MongoDB/Atlas ayarlarini kontrol edin."
+            ),
+            "db_error": db_startup_error,
+        },
+    )
 
 
 @app.post("/auth/register", status_code=201)

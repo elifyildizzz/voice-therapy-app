@@ -365,16 +365,19 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
                       const SizedBox(height: 14),
                       const _DiaphragmGuideCard(),
                       const SizedBox(height: 20),
-                      FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: _authButtonColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                      Align(
+                        alignment: Alignment.center,
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: _authButtonColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
+                          onPressed: _goToRecordingStep,
+                          child: const Text('Kayıt aşamasına geç'),
                         ),
-                        onPressed: _goToRecordingStep,
-                        child: const Text('Kayıt aşamasına geç'),
                       ),
                     ] else ...[
                       const SizedBox(height: 14),

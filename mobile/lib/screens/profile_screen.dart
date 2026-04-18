@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import '../models/client_form_record.dart';
 import '../models/app_user.dart';
-import '../models/sz_test_record.dart';
+import '../models/notification_profile.dart';
 import '../services/auth_service.dart';
-import '../services/client_form_repository.dart';
-import '../services/sz_test_repository.dart';
+import '../services/measurement_repository.dart';
+import '../services/notification_profile_repository.dart';
 import '../theme/app_theme.dart';
-import '../utils/app_formatters.dart';
-import 'sz_test_screen.dart';
-
-const Color _profileAccentGreen = AppTheme.homeAccent;
-const Color _profileSoftGreen = Color(0xFFF0F5E9);
-const Color _profileGreenBorder = Color(0xFFCCD9C4);
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,478 +15,170 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-enum _ProfileTab {
-  measurements,
-  questionnaires,
-  activity,
-}
-
-enum _ClinicalStatus {
-  normal,
-  risk,
-  borderline,
+enum _ProfilePanel {
+  profile,
+  notifications,
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  _ProfileTab _activeTab = _ProfileTab.measurements;
+  final MeasurementRepository _measurementRepository =
+      MeasurementRepository.instance;
+  final _profileFormKey = GlobalKey<FormState>();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _newPasswordConfirmController = TextEditingController();
 
-  Future<_ProfileData> _loadProfileData() async {
-    final questionnaires = await ClientFormRepository.instance.fetchRecords();
-    final measurements = await SzTestRepository.instance.fetchRecords();
+  late Future<NotificationProfile> _notificationProfileFuture;
+  bool _isSavingProfile = false;
+  bool _isSavingNotifications = false;
+  bool _isLoadingTodayRecordCount = true;
+  _ProfilePanel? _expandedPanel;
+  bool _vocalHygieneEnabled = true;
+  int _maxDailyNotifications = 2;
+  int _todayRecordCount = 0;
+  List<String> _preferredTimes = const <String>['10:30', '15:30'];
+  Set<String> _enabledTopics = NotificationProfile.defaultTopics.toSet();
 
-    return _ProfileData(
-      measurements: measurements,
-      questionnaires: questionnaires,
-    );
-  }
+  static const List<String> _timeOptions = <String>[
+    '09:30',
+    '10:30',
+    '11:30',
+    '14:00',
+    '15:30',
+    '17:00',
+    '20:30',
+  ];
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.surface,
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: Listenable.merge([
-            AuthService.instance.currentUserNotifier,
-            ClientFormRepository.instance.changes,
-            SzTestRepository.instance.changes,
-          ]),
-          builder: (context, _) {
-            return FutureBuilder<_ProfileData>(
-              future: _loadProfileData(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final data = snapshot.data ??
-                    const _ProfileData(
-                      measurements: <SzTestRecord>[],
-                      questionnaires: <ClientFormRecord>[],
-                    );
-
-                final user = AuthService.instance.currentUser;
-                final fullName = user == null
-                    ? 'Profil'
-                    : '${user.firstName} ${user.lastName}'.trim();
-
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                  children: [
-                    _ProfileHeaderCard(
-                      fullName: fullName,
-                      lastSessionDate: _buildLastSessionLabel(data),
-                      onEditPressed:
-                          user == null ? null : () => _openProfileEditor(user),
-                    ),
-                    const SizedBox(height: 18),
-                    _ProfileTabs(
-                      activeTab: _activeTab,
-                      onTabSelected: (tab) {
-                        setState(() {
-                          _activeTab = tab;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    ..._buildActiveContent(data),
-                  ],
-                );
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  String _buildLastSessionLabel(_ProfileData data) {
-    final candidates = <DateTime>[];
-    candidates.addAll(data.measurements.map((item) => item.createdAt));
-    candidates.addAll(data.questionnaires.map((item) => item.createdAt));
-
-    if (candidates.isEmpty) {
-      return 'Son seans: Kayıt bulunmuyor';
-    }
-
-    candidates.sort((a, b) => b.compareTo(a));
-    return 'Son seans: ${formatAppDate(candidates.first)}';
-  }
-
-  List<Widget> _buildActiveContent(_ProfileData data) {
-    switch (_activeTab) {
-      case _ProfileTab.measurements:
-        final items = data.measurements
-            .map(
-              (record) => _MeasurementItem(
-                date: formatAppDate(record.createdAt),
-                name: 'S/Z Oranı',
-                value: record.ratio.toStringAsFixed(2),
-                unit: '',
-                status: _resolveMeasurementStatus(record.ratio),
-              ),
-            )
-            .toList(growable: false);
-
-        final content = <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _ProgressTrendCard(
-              points: _buildTrendPoints(data.measurements),
-            ),
-          ),
-        ];
-
-        if (items.isEmpty) {
-          content.add(
-            _EmptyStateCard(
-              icon: Icons.straighten_rounded,
-              title: 'Henüz ölçüm kaydı yok',
-              message: 'S/Z testi sonuçlarınız burada listelenecek.',
-              actionLabel: 'İlk Ölçümü Ekle',
-              onActionPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const SzTestScreen(),
-                  ),
-                );
-              },
-            ),
-          );
-          return content;
-        }
-
-        content.addAll(
-          items.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _MeasurementCard(item: item),
-            ),
-          ),
-        );
-        content.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _InsightsCard(
-              insights: _buildInsights(data),
-            ),
-          ),
-        );
-        return content;
-
-      case _ProfileTab.questionnaires:
-        final items = data.questionnaires
-            .map(
-              (record) => _QuestionnaireItem(
-                date: formatAppDate(record.createdAt),
-                name: 'Danışan Bilgi Formu',
-                score: record.totalScore,
-                interpretation: record.resultLabel,
-                status: _resolveQuestionnaireStatus(record.totalScore),
-              ),
-            )
-            .toList(growable: false);
-
-        if (items.isEmpty) {
-          return const [
-            _EmptyStateCard(
-              icon: Icons.assignment_outlined,
-              title: 'Henüz anket kaydı yok',
-              message: 'Anket geçmişiniz burada listelenecek.',
-            ),
-          ];
-        }
-
-        return items
-            .map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _QuestionnaireCard(item: item),
-              ),
-            )
-            .toList();
-
-      case _ProfileTab.activity:
-        final items = _buildActivityItems(data);
-
-        if (items.isEmpty) {
-          return const [
-            _EmptyStateCard(
-              icon: Icons.history,
-              title: 'Henüz aktivite yok',
-              message: 'Yaptığınız işlemler burada kronolojik görünür.',
-            ),
-          ];
-        }
-
-        return items
-            .map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _ActivityCard(item: item),
-              ),
-            )
-            .toList();
-    }
-  }
-
-  List<_ActivityItem> _buildActivityItems(_ProfileData data) {
-    final items = <_ActivityItem>[];
-
-    for (final record in data.measurements) {
-      items.add(
-        _ActivityItem(
-          date: formatAppDate(record.createdAt),
-          type: 'Ölçüm',
-          description:
-              'S/Z testi tamamlandı (Oran: ${record.ratio.toStringAsFixed(2)})',
-          createdAt: record.createdAt,
-        ),
-      );
-    }
-
-    for (final record in data.questionnaires) {
-      items.add(
-        _ActivityItem(
-          date: formatAppDate(record.createdAt),
-          type: 'Anket',
-          description:
-              'Danışan bilgi formu dolduruldu (Skor: ${record.totalScore})',
-          createdAt: record.createdAt,
-        ),
-      );
-    }
-
-    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return items;
-  }
-
-  _ClinicalStatus _resolveMeasurementStatus(double ratio) {
-    if (ratio <= 1.4) {
-      return _ClinicalStatus.normal;
-    }
-    if (ratio <= 1.6) {
-      return _ClinicalStatus.borderline;
-    }
-    return _ClinicalStatus.risk;
-  }
-
-  _ClinicalStatus _resolveQuestionnaireStatus(int totalScore) {
-    if (totalScore <= 9) {
-      return _ClinicalStatus.normal;
-    }
-    if (totalScore <= 14) {
-      return _ClinicalStatus.borderline;
-    }
-    return _ClinicalStatus.risk;
-  }
-
-  List<_TrendPoint> _buildTrendPoints(List<SzTestRecord> measurements) {
-    if (measurements.isEmpty) {
-      return const <_TrendPoint>[];
-    }
-
-    final ascending = [...measurements]
-      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    final recent = ascending.length > 6
-        ? ascending.sublist(ascending.length - 6)
-        : ascending;
-
-    return recent
-        .map(
-          (item) => _TrendPoint(
-            label: '${_monthLabel(item.createdAt.month)} ${item.createdAt.day}',
-            value: item.ratio,
-          ),
-        )
-        .toList(growable: false);
-  }
-
-  List<String> _buildInsights(_ProfileData data) {
-    final insights = <String>[];
-    final measurements = data.measurements;
-    final questionnaires = data.questionnaires;
-
-    if (measurements.length >= 2) {
-      final latest = measurements[0].ratio;
-      final previous = measurements[1].ratio;
-      final latestDistance = (latest - 1.0).abs();
-      final previousDistance = (previous - 1.0).abs();
-      if (latestDistance < previousDistance) {
-        insights.add(
-          'S/Z oranı son ölçümde önceki seansa göre iyileşti.',
-        );
-      } else if (latestDistance > previousDistance) {
-        insights.add(
-          'S/Z oranı son ölçümde bir miktar dalgalandı, düzenli takip önerilir.',
-        );
-      } else {
-        insights.add('S/Z oranı son iki seansta benzer seyrediyor.');
-      }
-    } else {
-      insights.add('Trend değerlendirmesi için en az 2 S/Z kaydı gerekiyor.');
-    }
-
-    if (measurements.length >= 3) {
-      final values = measurements.take(5).map((item) => item.ratio).toList();
-      final minValue = values.reduce((a, b) => a < b ? a : b);
-      final maxValue = values.reduce((a, b) => a > b ? a : b);
-      if ((maxValue - minValue) <= 0.25) {
-        insights.add('Ses stabilitesi son ölçümlerde tutarlı ilerliyor.');
-      } else {
-        insights
-            .add('Ses stabilitesinde değişkenlik var, egzersize devam edin.');
-      }
-    }
-
-    if (questionnaires.length >= 2) {
-      final latest = questionnaires[0].totalScore;
-      final previous = questionnaires[1].totalScore;
-      if (latest < previous) {
-        insights.add('Anket puanlarında olumlu yönde bir gelişim görünüyor.');
-      } else if (latest > previous) {
-        insights
-            .add('Anket puanları yükselmiş; klinik takip sıklaştırılabilir.');
-      } else {
-        insights.add('Anket puanları stabil seyrediyor.');
-      }
-    } else if (questionnaires.length == 1) {
-      insights.add(
-          'Anket trendi için ikinci bir kayıt oluştuğunda karşılaştırma yapılacak.');
-    }
-
-    return insights.take(3).toList(growable: false);
-  }
-
-  String _monthLabel(int month) {
-    const monthLabels = <int, String>{
-      1: 'Oca',
-      2: 'Şub',
-      3: 'Mar',
-      4: 'Nis',
-      5: 'May',
-      6: 'Haz',
-      7: 'Tem',
-      8: 'Ağu',
-      9: 'Eyl',
-      10: 'Eki',
-      11: 'Kas',
-      12: 'Ara',
-    };
-    return monthLabels[month] ?? month.toString();
-  }
-
-  Future<void> _openProfileEditor(AppUser user) async {
-    final result = await showModalBottomSheet<_ProfileEditorResult>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => _ProfileEditorSheet(user: user),
-    );
-
-    if (!mounted || result == null) {
-      return;
-    }
-
-    switch (result) {
-      case _ProfileEditorSuccess():
-        _showSnackBar(
-          'Profil bilgileri güncellendi.',
-          const Color(0xFF1F7A45),
-        );
-      case _ProfileEditorError(:final message):
-        _showSnackBar(message, const Color(0xFFB42318));
-      case _ProfileEditorSignedOut():
-        await AuthService.instance.signOut();
-    }
-  }
-
-  void _showSnackBar(String message, Color textColor) {
-    if (!mounted) {
-      return;
-    }
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.white,
-        content: Text(
-          message,
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-sealed class _ProfileEditorResult {
-  const _ProfileEditorResult();
-}
-
-class _ProfileEditorSuccess extends _ProfileEditorResult {
-  const _ProfileEditorSuccess();
-}
-
-class _ProfileEditorSignedOut extends _ProfileEditorResult {
-  const _ProfileEditorSignedOut();
-}
-
-class _ProfileEditorError extends _ProfileEditorResult {
-  const _ProfileEditorError(this.message);
-
-  final String message;
-}
-
-class _ProfileEditorSheet extends StatefulWidget {
-  const _ProfileEditorSheet({
-    required this.user,
-  });
-
-  final AppUser user;
-
-  @override
-  State<_ProfileEditorSheet> createState() => _ProfileEditorSheetState();
-}
-
-class _ProfileEditorSheetState extends State<_ProfileEditorSheet> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _firstNameController;
-  late final TextEditingController _lastNameController;
-  late final TextEditingController _emailController;
-
-  bool _isSubmitting = false;
+  static const Map<String, String> _topicLabels = <String, String>{
+    'hydration': 'Su tüketimi',
+    'nutrition': 'Beslenme',
+    'voice_usage': 'Ses kullanımı',
+    'environmental_factors': 'Ortam koşulları',
+    'irritants': 'Kafein ve duman',
+    'voice_rest': 'Ses molası',
+    'throat_clearing': 'Boğaz temizleme',
+    'reflux_control': 'Reflü kontrolü',
+  };
 
   @override
   void initState() {
     super.initState();
-    _firstNameController = TextEditingController(text: widget.user.firstName);
-    _lastNameController = TextEditingController(text: widget.user.lastName);
-    _emailController = TextEditingController(text: widget.user.email);
+    _syncUser(AuthService.instance.currentUser);
+    _notificationProfileFuture = _loadNotificationProfile();
+    _measurementRepository.changes.addListener(_handleMeasurementChange);
+    _loadTodayRecordCount();
   }
 
   @override
   void dispose() {
+    _measurementRepository.changes.removeListener(_handleMeasurementChange);
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _newPasswordConfirmController.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    final form = _formKey.currentState;
-    if (form == null || !form.validate() || _isSubmitting) {
+  void _syncUser(AppUser? user) {
+    if (user == null) {
+      return;
+    }
+    _firstNameController.text = user.firstName;
+    _lastNameController.text = user.lastName;
+    _emailController.text = user.email;
+  }
+
+  Future<NotificationProfile> _loadNotificationProfile() async {
+    final profile = await NotificationProfileRepository.instance.fetchProfile();
+    if (mounted) {
+      _applyNotificationProfile(profile);
+    }
+    return profile;
+  }
+
+  void _applyNotificationProfile(NotificationProfile profile) {
+    setState(() {
+      _vocalHygieneEnabled = profile.vocalHygieneEnabled;
+      _maxDailyNotifications = profile.maxDailyNotifications;
+      _preferredTimes = _normalizeTimes(profile.preferredTimes);
+      _enabledTopics = profile.enabledTopics.toSet();
+    });
+  }
+
+  List<String> _normalizeTimes(List<String> times) {
+    final next = times.isEmpty ? const <String>['10:30', '15:30'] : times;
+    return List<String>.generate(
+      _maxDailyNotifications,
+      (index) => next[index % next.length],
+    );
+  }
+
+  void _handleMeasurementChange() {
+    _loadTodayRecordCount();
+  }
+
+  Future<void> _loadTodayRecordCount() async {
+    if (!_measurementRepository.hasLoadedCache) {
+      if (mounted) {
+        setState(() {
+          _isLoadingTodayRecordCount = true;
+        });
+      }
+    }
+
+    try {
+      final records = _measurementRepository.hasLoadedCache
+          ? _measurementRepository.peekRecords()
+          : await _measurementRepository.fetchRecords();
+      final todayClientDate = _formatClientDate(DateTime.now());
+      final todayCount = records
+          .where((record) => record.clientDate == todayClientDate)
+          .length;
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _todayRecordCount = todayCount;
+        _isLoadingTodayRecordCount = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _todayRecordCount = 0;
+        _isLoadingTodayRecordCount = false;
+      });
+    }
+  }
+
+  String _formatClientDate(DateTime value) {
+    final local = value.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    return '${local.year}-$month-$day';
+  }
+
+  void _togglePanel(_ProfilePanel panel) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _expandedPanel = _expandedPanel == panel ? null : panel;
+    });
+  }
+
+  Future<void> _saveProfile() async {
+    final form = _profileFormKey.currentState;
+    if (form == null || !form.validate() || _isSavingProfile) {
       return;
     }
 
     setState(() {
-      _isSubmitting = true;
+      _isSavingProfile = true;
     });
 
     try {
@@ -500,30 +186,130 @@ class _ProfileEditorSheetState extends State<_ProfileEditorSheet> {
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
         email: _emailController.text,
+        currentPassword: _currentPasswordController.text,
+        newPassword: _newPasswordController.text,
       );
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context).pop(const _ProfileEditorSuccess());
+      _currentPasswordController.clear();
+      _newPasswordController.clear();
+      _newPasswordConfirmController.clear();
+      _showMessage('Profil bilgileri güncellendi.', success: true);
     } on AuthException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context).pop(_ProfileEditorError(error.message));
+      _showMessage(error.message);
     } finally {
       if (mounted) {
         setState(() {
-          _isSubmitting = false;
+          _isSavingProfile = false;
         });
       }
     }
   }
 
-  void _signOut() {
-    if (_isSubmitting) {
+  Future<void> _saveNotifications() async {
+    if (_isSavingNotifications) {
       return;
     }
-    Navigator.of(context).pop(const _ProfileEditorSignedOut());
+
+    setState(() {
+      _isSavingNotifications = true;
+    });
+
+    try {
+      final profile =
+          await NotificationProfileRepository.instance.updateProfile(
+        vocalHygieneEnabled: _vocalHygieneEnabled,
+        maxDailyNotifications: _maxDailyNotifications,
+        preferredTimes: _preferredTimes.take(_maxDailyNotifications).toList(),
+        enabledTopics: _enabledTopics.toList(),
+      );
+      _applyNotificationProfile(profile);
+      _showMessage('Bildirim tercihleri güncellendi.', success: true);
+    } catch (_) {
+      _showMessage('Bildirim tercihleri güncellenirken sorun oluştu.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingNotifications = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _confirmSignOut() async {
+    final shouldSignOut = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: AppTheme.card,
+          title: const Text(
+            'Çıkış Yap',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          content: const Text(
+            'Hesabından çıkış yapmak istediğine emin misin?',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.35,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.textPrimary,
+              ),
+              child: const Text('Vazgeç'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF7A1B1B),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Çıkış Yap'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldSignOut != true || !mounted) {
+      return;
+    }
+
+    await AuthService.instance.signOut();
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  void _showMessage(String message, {bool success = false}) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.white,
+        content: Text(
+          message,
+          style: TextStyle(
+            color: success ? const Color(0xFF1F7A45) : const Color(0xFFB42318),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 
   String? _validateRequired(String? value, String fieldLabel) {
@@ -538,112 +324,468 @@ class _ProfileEditorSheetState extends State<_ProfileEditorSheet> {
     if (text.isEmpty) {
       return 'E-posta alanı zorunludur.';
     }
-    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    if (!emailRegex.hasMatch(text)) {
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(text)) {
       return 'Geçerli bir e-posta adresi girin.';
+    }
+    return null;
+  }
+
+  String? _validateNewPassword(String? value) {
+    final text = (value ?? '').trim();
+    if (text.isEmpty) {
+      return null;
+    }
+    if (text.length < 8) {
+      return 'Yeni şifre en az 8 karakter olmalıdır.';
+    }
+    if (_currentPasswordController.text.trim().isEmpty) {
+      return 'Mevcut şifreyi girin.';
+    }
+    return null;
+  }
+
+  String? _validatePasswordConfirm(String? value) {
+    final text = (value ?? '').trim();
+    if (_newPasswordController.text.trim().isEmpty && text.isEmpty) {
+      return null;
+    }
+    if (text != _newPasswordController.text.trim()) {
+      return 'Yeni şifreler eşleşmiyor.';
     }
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Profili Düzenle',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.darkBlue,
+    _syncUser(AuthService.instance.currentUser);
+    final user = AuthService.instance.currentUser;
+    final fullName =
+        user == null ? 'Profil' : '${user.firstName} ${user.lastName}'.trim();
+
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      body: Theme(
+        data: Theme.of(context).copyWith(
+          inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
+                labelStyle: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                floatingLabelStyle: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                helperStyle: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _firstNameController,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Ad',
-                    ),
-                    validator: (value) => _validateRequired(value, 'Ad'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _lastNameController,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Soyad',
-                    ),
-                    validator: (value) => _validateRequired(value, 'Soyad'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.done,
-                    decoration: const InputDecoration(
-                      labelText: 'E-posta',
-                    ),
-                    validator: _validateEmail,
-                    onFieldSubmitted: (_) => _submit(),
-                  ),
-                ],
+        ),
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            children: [
+              _ProfileHeaderCard(
+                fullName: fullName,
+                todayRecordCount: _todayRecordCount,
+                isLoadingTodayRecordCount: _isLoadingTodayRecordCount,
               ),
-            ),
-            const SizedBox(height: 18),
-            FilledButton(
-              onPressed: _isSubmitting ? null : _submit,
-              child: Text(_isSubmitting ? 'Kaydediliyor...' : 'Kaydet'),
-            ),
-            const SizedBox(height: 10),
-            TextButton.icon(
-              onPressed: _isSubmitting ? null : _signOut,
-              icon: const Icon(Icons.logout_rounded),
-              label: const Text('Çıkış Yap'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF7A1B1B),
+              const SizedBox(height: 18),
+              _ExpandableCard(
+                title: 'Profil Bilgileri',
+                subtitle: 'Ad, e-posta ve diğer bilgilerini düzenle.',
+                icon: Icons.person_outline_rounded,
+                iconColor: AppTheme.homeAccent,
+                iconBackgroundColor: AppTheme.homeIconBackground,
+                isExpanded: _expandedPanel == _ProfilePanel.profile,
+                onTap: () => _togglePanel(_ProfilePanel.profile),
+                child: _buildProfileForm(),
               ),
-            ),
-          ],
+              const SizedBox(height: 18),
+              FutureBuilder<NotificationProfile>(
+                future: _notificationProfileFuture,
+                builder: (context, snapshot) {
+                  final isLoading =
+                      snapshot.connectionState != ConnectionState.done;
+                  return _ExpandableCard(
+                    title: 'Bildirimler',
+                    subtitle:
+                        'Vokal hijyen hatırlatmalarını ve saatlerini yönet.',
+                    icon: Icons.notifications_none_rounded,
+                    iconColor: AppTheme.homeAccent,
+                    iconBackgroundColor: AppTheme.homeIconBackground,
+                    isExpanded: _expandedPanel == _ProfilePanel.notifications,
+                    onTap: () => _togglePanel(_ProfilePanel.notifications),
+                    child: isLoading
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        : _buildNotificationForm(snapshot.data),
+                  );
+                },
+              ),
+              const SizedBox(height: 18),
+              _ActionCard(
+                title: 'Çıkış Yap',
+                subtitle: 'Bu cihazdaki oturumunu güvenli şekilde kapat.',
+                icon: Icons.logout_outlined,
+                iconColor: const Color(0xFF9F3C31),
+                iconBackgroundColor: const Color(0xFFF8EEEC),
+                onTap: _confirmSignOut,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _ProfileData {
-  const _ProfileData({
-    required this.measurements,
-    required this.questionnaires,
-  });
+  Widget _buildProfileForm() {
+    return Form(
+      key: _profileFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _firstNameController,
+            textInputAction: TextInputAction.next,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: const InputDecoration(labelText: 'Ad'),
+            validator: (value) => _validateRequired(value, 'Ad'),
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _lastNameController,
+            textInputAction: TextInputAction.next,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: const InputDecoration(labelText: 'Soyad'),
+            validator: (value) => _validateRequired(value, 'Soyad'),
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: const InputDecoration(labelText: 'E-posta'),
+            validator: _validateEmail,
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _currentPasswordController,
+            obscureText: true,
+            textInputAction: TextInputAction.next,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: const InputDecoration(
+              labelText: 'Mevcut şifre',
+              helperText: 'Şifre değiştirmeyeceksen boş bırak.',
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _newPasswordController,
+            obscureText: true,
+            textInputAction: TextInputAction.next,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: const InputDecoration(labelText: 'Yeni şifre'),
+            validator: _validateNewPassword,
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _newPasswordConfirmController,
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: const InputDecoration(labelText: 'Yeni şifre tekrar'),
+            validator: _validatePasswordConfirm,
+            onFieldSubmitted: (_) => _saveProfile(),
+          ),
+          const SizedBox(height: 20),
+          OutlinedButton(
+            onPressed: _isSavingProfile ? null : _saveProfile,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppTheme.textPrimary,
+              side: const BorderSide(color: AppTheme.cardBorder),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+            child: Text(
+              _isSavingProfile ? 'Kaydediliyor...' : 'Profili Kaydet',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  final List<SzTestRecord> measurements;
-  final List<ClientFormRecord> questionnaires;
+  Widget _buildNotificationForm(NotificationProfile? profile) {
+    final activeItems = profile?.activePlan?.items ?? const [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _vocalHygieneEnabled,
+          title: const Text(
+            'Vokal hijyen bildirimleri',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          subtitle: const Text(
+            'Cevaplarına göre kişisel hatırlatmalar al.',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppTheme.textMuted,
+            ),
+          ),
+          thumbColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AppTheme.homeAccent;
+            }
+            return AppTheme.textMuted;
+          }),
+          trackColor: const WidgetStatePropertyAll(Colors.white),
+          trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AppTheme.homeAccent;
+            }
+            return AppTheme.cardBorder;
+          }),
+          onChanged: (value) {
+            setState(() {
+              _vocalHygieneEnabled = value;
+            });
+          },
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Günlük bildirim sayısı',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textMuted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [1, 2, 3].map((count) {
+            final selected = _maxDailyNotifications == count;
+            return ChoiceChip(
+              label: Text('$count'),
+              selected: selected,
+              backgroundColor: Colors.white,
+              selectedColor: Colors.white,
+              checkmarkColor: AppTheme.homeAccent,
+              side: BorderSide(
+                color: selected ? AppTheme.homeAccent : AppTheme.cardBorder,
+                width: selected ? 1.4 : 1,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              labelStyle: const TextStyle(
+                fontSize: 12,
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+              onSelected: (_) {
+                setState(() {
+                  _maxDailyNotifications = count;
+                  _preferredTimes = _normalizeTimes(_preferredTimes);
+                });
+              },
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 14),
+        ...List<Widget>.generate(_maxDailyNotifications, (index) {
+          final value = _preferredTimes[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: DropdownButtonFormField<String>(
+              initialValue:
+                  _timeOptions.contains(value) ? value : _timeOptions.first,
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: AppTheme.textPrimary,
+              ),
+              decoration: InputDecoration(
+                labelText: '${index + 1}. bildirim saati',
+                filled: true,
+                fillColor: Colors.white,
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: const BorderSide(
+                    color: AppTheme.homeAccent,
+                    width: 1.4,
+                  ),
+                ),
+              ),
+              items: _timeOptions
+                  .map(
+                    (time) => DropdownMenuItem<String>(
+                      value: time,
+                      child: Text(time),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() {
+                  final times = [..._preferredTimes];
+                  times[index] = value;
+                  _preferredTimes = times;
+                });
+              },
+            ),
+          );
+        }),
+        const SizedBox(height: 4),
+        const Text(
+          'Bildirim konuları',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textMuted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: NotificationProfile.defaultTopics.map((topic) {
+            final selected = _enabledTopics.contains(topic);
+            return FilterChip(
+              label: Text(_topicLabels[topic] ?? topic),
+              selected: selected,
+              backgroundColor: Colors.white,
+              selectedColor: Colors.white,
+              checkmarkColor: AppTheme.homeAccent,
+              side: BorderSide(
+                color: selected ? AppTheme.homeAccent : AppTheme.cardBorder,
+                width: selected ? 1.4 : 1,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              labelStyle: const TextStyle(
+                fontSize: 12,
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+              onSelected: (value) {
+                setState(() {
+                  if (value) {
+                    _enabledTopics.add(topic);
+                  } else {
+                    _enabledTopics.remove(topic);
+                  }
+                });
+              },
+            );
+          }).toList(),
+        ),
+        if (activeItems.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text(
+            'Aktif plan',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...activeItems.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                '${item.time} - ${item.title}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        OutlinedButton(
+          onPressed: _isSavingNotifications ? null : _saveNotifications,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: AppTheme.textPrimary,
+            side: const BorderSide(color: AppTheme.cardBorder),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+          child: Text(
+            _isSavingNotifications ? 'Kaydediliyor...' : 'Bildirimleri Kaydet',
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _ProfileHeaderCard extends StatelessWidget {
   const _ProfileHeaderCard({
     required this.fullName,
-    required this.lastSessionDate,
-    required this.onEditPressed,
+    required this.todayRecordCount,
+    required this.isLoadingTodayRecordCount,
   });
 
   final String fullName;
-  final String lastSessionDate;
-  final VoidCallback? onEditPressed;
+  final int todayRecordCount;
+  final bool isLoadingTodayRecordCount;
 
   @override
   Widget build(BuildContext context) {
@@ -656,73 +798,90 @@ class _ProfileHeaderCard extends StatelessWidget {
             .join();
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.homeCard,
-            Color(0xFFCFE0C8),
-          ],
-        ),
+        color: AppTheme.homeCard,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _profileGreenBorder),
         boxShadow: AppTheme.softShadow,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: _profileAccentGreen.withValues(alpha: 0.18),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: _profileAccentGreen.withValues(alpha: 0.12),
-              ),
+              color: AppTheme.homeIconBackground,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFFD4E0D4)),
             ),
             alignment: Alignment.center,
             child: Text(
               initials,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 24,
                 fontWeight: FontWeight.w800,
-                color: _profileAccentGreen,
+                color: AppTheme.homeAccent,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   fullName,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: _profileAccentGreen,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.homeAccent,
                     letterSpacing: -0.3,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  lastSessionDate,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textMuted,
+                const Text(
+                  'Bugünkü aktivite özeti',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.light,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: onEditPressed,
-            splashRadius: 22,
-            icon: const Icon(
-              Icons.edit_outlined,
-              color: _profileAccentGreen,
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.homeIconBackground,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFD4E0D4)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Bugün',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.homeAccent,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isLoadingTodayRecordCount ? '...' : '$todayRecordCount kayıt',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.homeAccent,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -731,750 +890,228 @@ class _ProfileHeaderCard extends StatelessWidget {
   }
 }
 
-class _ProfileTabs extends StatelessWidget {
-  const _ProfileTabs({
-    required this.activeTab,
-    required this.onTabSelected,
+class _ExpandableCard extends StatelessWidget {
+  const _ExpandableCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackgroundColor,
+    required this.isExpanded,
+    required this.onTap,
+    required this.child,
   });
 
-  final _ProfileTab activeTab;
-  final ValueChanged<_ProfileTab> onTabSelected;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackgroundColor;
+  final bool isExpanded;
+  final VoidCallback onTap;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(6),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: AppTheme.card,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: AppTheme.softShadow,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _TabButton(
-              title: 'Ölçümler',
-              isActive: activeTab == _ProfileTab.measurements,
-              onTap: () => onTabSelected(_ProfileTab.measurements),
-            ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: iconBackgroundColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.cardBorder),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          icon,
+                          color: iconColor,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textMuted,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      AnimatedRotation(
+                        turns: isExpanded ? 0.25 : 0,
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        child: const Icon(
+                          Icons.chevron_right_rounded,
+                          size: 24,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeInOutCubic,
+                alignment: Alignment.topCenter,
+                child: isExpanded
+                    ? Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            const Divider(height: 1),
+                            const SizedBox(height: 16),
+                            child,
+                          ],
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
           ),
-          Expanded(
-            child: _TabButton(
-              title: 'Anketler',
-              isActive: activeTab == _ProfileTab.questionnaires,
-              onTap: () => onTabSelected(_ProfileTab.questionnaires),
-            ),
-          ),
-          Expanded(
-            child: _TabButton(
-              title: 'Aktivite',
-              isActive: activeTab == _ProfileTab.activity,
-              onTap: () => onTabSelected(_ProfileTab.activity),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _TabButton extends StatelessWidget {
-  const _TabButton({
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
     required this.title,
-    required this.isActive,
+    required this.subtitle,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackgroundColor,
     required this.onTap,
   });
 
   final String title;
-  final bool isActive;
+  final String subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackgroundColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isActive ? _profileAccentGreen : Colors.transparent,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-              color: isActive ? Colors.white : AppTheme.textMuted,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProgressTrendCard extends StatelessWidget {
-  const _ProgressTrendCard({
-    required this.points,
-  });
-
-  final List<_TrendPoint> points;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ClinicalCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.bar_chart_rounded,
-                color: _profileAccentGreen,
-                size: 22,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'İlerleme Trendi',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          if (points.length < 2)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 14),
-              child: Text(
-                'Grafik için en az 2 ölçüm kaydı gerekli.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.textMuted,
-                ),
-              ),
-            )
-          else
-            SizedBox(
-              height: 220,
-              child: _TrendChart(points: points),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TrendChart extends StatelessWidget {
-  const _TrendChart({
-    required this.points,
-  });
-
-  final List<_TrendPoint> points;
-
-  @override
-  Widget build(BuildContext context) {
-    final values = points.map((point) => point.value).toList(growable: false);
-    var minValue = values.reduce((a, b) => a < b ? a : b);
-    var maxValue = values.reduce((a, b) => a > b ? a : b);
-    if ((maxValue - minValue) < 0.2) {
-      minValue -= 0.1;
-      maxValue += 0.1;
-    }
-
-    return Column(
-      children: [
-        Expanded(
-          child: CustomPaint(
-            painter: _TrendChartPainter(
-              values: values,
-              minValue: minValue,
-              maxValue: maxValue,
-            ),
-            child: const SizedBox.expand(),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              points.first.label,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7784)),
-            ),
-            if (points.length > 2)
-              Text(
-                points[points.length ~/ 2].label,
-                style: const TextStyle(fontSize: 13, color: Color(0xFF6B7784)),
-              ),
-            Text(
-              points.last.label,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7784)),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _TrendChartPainter extends CustomPainter {
-  _TrendChartPainter({
-    required this.values,
-    required this.minValue,
-    required this.maxValue,
-  });
-
-  final List<double> values;
-  final double minValue;
-  final double maxValue;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (values.length < 2) {
-      return;
-    }
-
-    const leftPadding = 6.0;
-    const rightPadding = 6.0;
-    const topPadding = 8.0;
-    const bottomPadding = 8.0;
-    final chartWidth = size.width - leftPadding - rightPadding;
-    final chartHeight = size.height - topPadding - bottomPadding;
-
-    final gridPaint = Paint()
-      ..color = AppTheme.cardBorder
-      ..strokeWidth = 1;
-    final linePaint = Paint()
-      ..color = _profileAccentGreen
-      ..strokeWidth = 2.8
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final pointPaint = Paint()..color = _profileAccentGreen;
-
-    for (var i = 0; i < 4; i++) {
-      final y = topPadding + (chartHeight * i / 3);
-      canvas.drawLine(
-        Offset(leftPadding, y),
-        Offset(size.width - rightPadding, y),
-        gridPaint,
-      );
-    }
-
-    for (var i = 0; i < 3; i++) {
-      final x = leftPadding + (chartWidth * i / 2);
-      canvas.drawLine(
-        Offset(x, topPadding),
-        Offset(x, size.height - bottomPadding),
-        gridPaint,
-      );
-    }
-
-    final path = Path();
-    for (var i = 0; i < values.length; i++) {
-      final x = leftPadding + (chartWidth * i / (values.length - 1));
-      final normalized = (values[i] - minValue) / (maxValue - minValue);
-      final y = topPadding + chartHeight * (1 - normalized);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    canvas.drawPath(path, linePaint);
-
-    for (var i = 0; i < values.length; i++) {
-      final x = leftPadding + (chartWidth * i / (values.length - 1));
-      final normalized = (values[i] - minValue) / (maxValue - minValue);
-      final y = topPadding + chartHeight * (1 - normalized);
-      canvas.drawCircle(Offset(x, y), 4.8, pointPaint);
-      canvas.drawCircle(
-        Offset(x, y),
-        2.8,
-        Paint()..color = Colors.white,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _TrendChartPainter oldDelegate) {
-    return oldDelegate.values != values ||
-        oldDelegate.minValue != minValue ||
-        oldDelegate.maxValue != maxValue;
-  }
-}
-
-class _InsightsCard extends StatelessWidget {
-  const _InsightsCard({
-    required this.insights,
-  });
-
-  final List<String> insights;
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.soft,
-        borderRadius: BorderRadius.circular(22),
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: AppTheme.softShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.auto_awesome_outlined,
-                  color: AppTheme.terracotta, size: 22),
-              SizedBox(width: 8),
-              Text(
-                'Klinik İçgörüler',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
-                ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...insights.map(
-            (insight) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 7),
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: iconBackgroundColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.cardBorder),
+                    ),
+                    alignment: Alignment.center,
                     child: Icon(
-                      Icons.circle,
-                      size: 8,
-                      color: AppTheme.terracotta,
+                      icon,
+                      color: iconColor,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textMuted,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      insight,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        height: 1.45,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 24,
+                    color: AppTheme.textMuted,
                   ),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MeasurementCard extends StatelessWidget {
-  const _MeasurementCard({
-    required this.item,
-  });
-
-  final _MeasurementItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ClinicalCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            item.date,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textMuted,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          item.value,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
-                            height: 1,
-                          ),
-                        ),
-                        if (item.unit.isNotEmpty) ...[
-                          const SizedBox(width: 6),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 2),
-                            child: Text(
-                              item.unit,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              _StatusBadge(status: item.status),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuestionnaireCard extends StatelessWidget {
-  const _QuestionnaireCard({
-    required this.item,
-  });
-
-  final _QuestionnaireItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ClinicalCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            item.date,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textMuted,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  item.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ),
-              _StatusBadge(
-                status: item.status,
-                textOverride: item.interpretation,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 14,
-              ),
-              children: [
-                const TextSpan(
-                  text: 'Skor ',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                TextSpan(
-                  text: '${item.score}',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({
-    required this.item,
-  });
-
-  final _ActivityItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ClinicalCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: _profileSoftGreen,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.check_rounded,
-              size: 20,
-              color: _profileAccentGreen,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.date,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item.type,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: _profileAccentGreen,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  item.description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyStateCard extends StatelessWidget {
-  const _EmptyStateCard({
-    required this.icon,
-    required this.title,
-    required this.message,
-    this.actionLabel,
-    this.onActionPressed,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onActionPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ClinicalCard(
-      child: Column(
-        children: [
-          Container(
-            width: 76,
-            height: 76,
-            decoration: BoxDecoration(
-              color: _profileSoftGreen,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Icon(icon, size: 38, color: _profileAccentGreen),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textMuted,
-              height: 1.4,
-            ),
-          ),
-          if (actionLabel != null && onActionPressed != null) ...[
-            const SizedBox(height: 18),
-            FilledButton(
-              onPressed: onActionPressed,
-              child: Text(actionLabel!),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ClinicalCard extends StatelessWidget {
-  const _ClinicalCard({
-    required this.child,
-  });
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.cardBorder),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: child,
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({
-    required this.status,
-    this.textOverride,
-  });
-
-  final _ClinicalStatus status;
-  final String? textOverride;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color background;
-    final Color foreground;
-    final String label;
-
-    switch (status) {
-      case _ClinicalStatus.normal:
-        background = const Color(0xFFE9F7EE);
-        foreground = const Color(0xFF237A44);
-        label = 'Normal';
-      case _ClinicalStatus.risk:
-        background = const Color(0xFFFBEAEC);
-        foreground = const Color(0xFFB43545);
-        label = 'Risk';
-      case _ClinicalStatus.borderline:
-        background = const Color(0xFFFFF7E5);
-        foreground = const Color(0xFF9A6A00);
-        label = 'Sınırda';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        textOverride ?? label,
-        style: TextStyle(
-          color: foreground,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
         ),
       ),
     );
   }
-}
-
-class _MeasurementItem {
-  const _MeasurementItem({
-    required this.date,
-    required this.name,
-    required this.value,
-    required this.unit,
-    required this.status,
-  });
-
-  final String date;
-  final String name;
-  final String value;
-  final String unit;
-  final _ClinicalStatus status;
-}
-
-class _TrendPoint {
-  const _TrendPoint({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final double value;
-}
-
-class _QuestionnaireItem {
-  const _QuestionnaireItem({
-    required this.date,
-    required this.name,
-    required this.score,
-    required this.interpretation,
-    required this.status,
-  });
-
-  final String date;
-  final String name;
-  final int score;
-  final String interpretation;
-  final _ClinicalStatus status;
-}
-
-class _ActivityItem {
-  const _ActivityItem({
-    required this.date,
-    required this.type,
-    required this.description,
-    required this.createdAt,
-  });
-
-  final String date;
-  final String type;
-  final String description;
-  final DateTime createdAt;
 }

@@ -8,6 +8,7 @@ import '../models/pitch_reading.dart';
 import '../services/live_pitch_tracker.dart';
 import '../theme/app_theme.dart';
 import '../widgets/live_pitch_chart.dart';
+import 'vocal_measurement_screen.dart';
 import 'warmup_exercise.dart';
 
 class VocalExerciseVideoScreen extends StatefulWidget {
@@ -261,14 +262,22 @@ class _VocalExerciseVideoScreenState extends State<VocalExerciseVideoScreen> {
                     ),
                     if (widget.exercise.howToText != null) ...[
                       const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: _HowToSection(
-                          text: widget.exercise.howToText!,
-                        ),
+                      _HowToSection(
+                        text: widget.exercise.howToText!,
+                        showMeasurementButton:
+                            widget.exercise.supportsMeasurement,
+                        onMeasurementTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => VocalMeasurementScreen(
+                                exercise: widget.exercise,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 28),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: _LivePitchSection(
@@ -302,8 +311,13 @@ class _PlainVideoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
 
-    return Padding(
+    return Container(
       padding: EdgeInsets.fromLTRB(16, topInset + 8, 20, 6),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppTheme.cardBorder),
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -449,49 +463,27 @@ class _TherapistVideoPlayer extends StatelessWidget {
                       ),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 32, 14, 12),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                      padding: const EdgeInsets.fromLTRB(14, 42, 14, 12),
+                      child: Row(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(999),
-                            child: VideoProgressIndicator(
-                              controller!,
-                              allowScrubbing: true,
-                              padding: EdgeInsets.zero,
-                              colors: VideoProgressColors(
-                                playedColor:
-                                    Colors.white.withValues(alpha: 0.9),
-                                bufferedColor:
-                                    Colors.white.withValues(alpha: 0.45),
-                                backgroundColor:
-                                    Colors.white.withValues(alpha: 0.28),
-                              ),
+                          Text(
+                            _formatVideoDuration(videoPosition),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Text(
-                                _formatVideoDuration(videoPosition),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                _formatVideoDuration(
-                                  videoDuration ?? Duration.zero,
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                          const Spacer(),
+                          Text(
+                            _formatVideoDuration(
+                              videoDuration ?? Duration.zero,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
@@ -597,33 +589,105 @@ class _VideoPlaceholder extends StatelessWidget {
 class _HowToSection extends StatelessWidget {
   const _HowToSection({
     required this.text,
+    this.showMeasurementButton = false,
+    this.onMeasurementTap,
   });
 
   final String text;
+  final bool showMeasurementButton;
+  final VoidCallback? onMeasurementTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Nasıl Yapmalısın?',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            color: AppTheme.textPrimary,
+    final items = text
+        .split(RegExp(r'(?<=[.!?])\s+'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(18, 16, 18, 10),
+            child: Text(
+              'Nasıl Yapmalısın?',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.textPrimary,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 16,
-            color: AppTheme.textMuted,
-            height: 1.55,
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: AppTheme.cardBorder,
           ),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+            child: Column(
+              children: [
+                for (var index = 0; index < items.length; index++)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: index == items.length - 1 ? 0 : 6,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Icon(
+                            Icons.circle,
+                            size: 6,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            items[index],
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textPrimary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (showMeasurementButton) ...[
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: onMeasurementTap,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.buttonPrimary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      icon: const Icon(Icons.task_alt_rounded, size: 20),
+                      label: const Text('Ölçüm yap'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -668,7 +732,7 @@ class _LivePitchSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 20),
         LivePitchChart(points: points),
         const SizedBox(height: 14),
         Row(
@@ -680,30 +744,28 @@ class _LivePitchSection extends StatelessWidget {
                   : '${currentHz!.toStringAsFixed(1)} Hz',
               style: const TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w400,
                 color: AppTheme.primary,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: isBusy ? null : onToggle,
-                style: FilledButton.styleFrom(
-                  backgroundColor:
-                      isListening ? AppTheme.terracotta : AppTheme.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 13,
-                  ),
+            const Spacer(),
+            FilledButton.icon(
+              onPressed: isBusy ? null : onToggle,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.buttonPrimary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 13,
                 ),
-                icon: Icon(
-                  isListening
-                      ? Icons.stop_circle_outlined
-                      : Icons.mic_none_rounded,
-                ),
-                label: Text(
-                  isListening ? 'Durdur' : 'Başlat',
-                ),
+              ),
+              icon: Icon(
+                isListening
+                    ? Icons.stop_circle_outlined
+                    : Icons.mic_none_rounded,
+              ),
+              label: Text(
+                isListening ? 'Durdur' : 'Başlat',
               ),
             ),
           ],

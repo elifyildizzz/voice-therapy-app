@@ -379,9 +379,6 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
   @override
   Widget build(BuildContext context) {
     final canRecord = !_isSending;
-    final micLabel = _recordedPaths.containsKey(_selectedStep)
-        ? '${_currentMeta.title} kaydını yenile'
-        : '${_currentMeta.title} kaydını al';
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -392,127 +389,96 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
         ),
         child: Column(
           children: [
-            const AppTopHeader.withBack(title: 'Ses Sağlığı Ön Tarama Testi'),
+            const AppTopHeader.withBack(
+              title: 'Ses Sağlığı Ön Tarama Testi',
+              showDivider: true,
+            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.card,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: AppTheme.cardBorder),
-                      boxShadow: AppTheme.softShadow,
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _InfoBadge(label: '2 ADIMLI KAYIT'),
-                        SizedBox(height: 10),
-                        Text(
-                          'Modelin çalışabilmesi için kullanıcıdan hem "A" hem de "İ" sesi alınır.',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
-                            height: 1.3,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Lütfen her iki sesi de normal konuşma tonunda, rahat ve sabit biçimde 5 saniye boyunca uzatın.',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textMuted,
-                            height: 1.45,
-                          ),
-                        ),
-                      ],
+                  const Text(
+                    'Modelin çalışabilmesi için “A” ve “İ” sesi gereklidir.',
+                    style: TextStyle(
+                      fontSize: 32 / 2,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                      height: 1.25,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _StepCard(
-                    title: _stepMeta[_VoiceStep.a]!.title,
-                    letter: _stepMeta[_VoiceStep.a]!.letter,
-                    isSelected: _selectedStep == _VoiceStep.a,
-                    isCompleted: _hasARecording,
-                    onTap: () => _selectStep(_VoiceStep.a),
-                  ),
-                  const SizedBox(height: 10),
-                  _StepCard(
-                    title: _stepMeta[_VoiceStep.i]!.title,
-                    letter: _stepMeta[_VoiceStep.i]!.letter,
-                    isSelected: _selectedStep == _VoiceStep.i,
-                    isCompleted: _hasIRecording,
-                    onTap: () => _selectStep(_VoiceStep.i),
-                  ),
-                  const SizedBox(height: 20),
                   Container(
-                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(26),
+                      borderRadius: BorderRadius.circular(22),
                       border: Border.all(color: AppTheme.cardBorder),
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Container(
-                          width: 132,
-                          height: 92,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppTheme.cardBorder),
-                          ),
-                          child: Text(
-                            _currentMeta.letter,
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
+                        _StepSelectorRow(
+                          title: _stepMeta[_VoiceStep.a]!.title,
+                          isSelected: _selectedStep == _VoiceStep.a,
+                          isCompleted: _hasARecording,
+                          onTap: () => _selectStep(_VoiceStep.a),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
+                        _StepSelectorRow(
+                          title: _stepMeta[_VoiceStep.i]!.title,
+                          isSelected: _selectedStep == _VoiceStep.i,
+                          isCompleted: _hasIRecording,
+                          onTap: () => _selectStep(_VoiceStep.i),
+                          isBlocked: !_hasARecording,
+                        ),
+                        const SizedBox(height: 12),
+                        const Divider(
+                          height: 1,
+                          color: AppTheme.cardBorder,
+                        ),
+                        const SizedBox(height: 20),
                         Text(
-                          _currentMeta.instruction,
+                          _currentMeta.letter,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            height: 1.45,
+                          style: TextStyle(
+                            fontSize: _currentMeta.letter == 'İ' ? 30 : 36,
+                            fontWeight: FontWeight.w500,
                             color: AppTheme.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 18),
-                        const Icon(
-                          Icons.graphic_eq_rounded,
-                          size: 72,
-                          color: AppTheme.primary,
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Normal tonunuzla 5 saniye uzatın.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18 / 1.2,
+                            height: 1.4,
+                            color: AppTheme.textMuted,
+                          ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
                         GestureDetector(
                           onTap: canRecord ? _onMicPressed : null,
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 240),
-                            width: 122,
-                            height: 122,
+                            duration: const Duration(milliseconds: 180),
+                            width: 102,
+                            height: 102,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _isSending
-                                  ? AppTheme.light.withValues(alpha: 0.55)
-                                  : AppTheme.primary,
+                              color: _isRecording
+                                  ? const Color(0xFFCF5A5A)
+                                  : const Color(0xFFF4F8F5),
                               border: Border.all(
                                 color: _isRecording
-                                    ? const Color(0xFFF1B97A)
-                                    : Colors.transparent,
-                                width: 6,
+                                    ? const Color(0xFFCF5A5A)
+                                    : AppTheme.homeAccent.withValues(
+                                        alpha: canRecord ? 1 : 0.45),
+                                width: 2,
                               ),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: Color(0x1E163B55),
-                                  blurRadius: 20,
+                                  color: Color(0x24163B55),
+                                  blurRadius: 18,
                                   offset: Offset(0, 10),
                                 ),
                               ],
@@ -521,22 +487,15 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                               _isRecording
                                   ? Icons.stop_rounded
                                   : Icons.mic_none_rounded,
-                              size: 58,
-                              color: Colors.white,
+                              size: 44,
+                              color: _isRecording
+                                  ? Colors.white
+                                  : AppTheme.homeAccent
+                                      .withValues(alpha: canRecord ? 1 : 0.45),
                             ),
                           ),
                         ),
                         const SizedBox(height: 14),
-                        Text(
-                          _isRecording ? 'Kaydı Durdur' : micLabel,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.primary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
                         Text(
                           _statusLabel,
                           textAlign: TextAlign.center,
@@ -546,24 +505,11 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 18),
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            onPressed: _isReadyToAnalyze &&
-                                    !_isRecording &&
-                                    !_isSending
-                                ? _sendToBackend
-                                : null,
-                            icon: const Icon(Icons.analytics_outlined),
-                            label: const Text('Ön Taramayı Başlat'),
-                          ),
-                        ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 14),
                   if (_errorText != null) ...[
-                    const SizedBox(height: 18),
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -580,9 +526,26 @@ class _VoiceAnalyzeScreenState extends State<VoiceAnalyzeScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
                   ],
-                  const SizedBox(height: 18),
                   const _BottomReminder(),
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.center,
+                    child: FilledButton(
+                      onPressed:
+                          _isReadyToAnalyze && !_isRecording && !_isSending
+                              ? _sendToBackend
+                              : null,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.buttonPrimary,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            AppTheme.buttonPrimary.withValues(alpha: 0.35),
+                      ),
+                      child: const Text('Ön Taramayı Başlat'),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -648,85 +611,43 @@ class _ScreeningViewModel {
   bool get isRetakeRequired => label == 'retake_required';
 }
 
-class _InfoBadge extends StatelessWidget {
-  const _InfoBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.soft,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-          color: AppTheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
-class _StepCard extends StatelessWidget {
-  const _StepCard({
+class _StepSelectorRow extends StatelessWidget {
+  const _StepSelectorRow({
     required this.title,
-    required this.letter,
     required this.isSelected,
     required this.isCompleted,
     required this.onTap,
+    this.isBlocked = false,
   });
 
   final String title;
-  final String letter;
   final bool isSelected;
   final bool isCompleted;
   final VoidCallback onTap;
+  final bool isBlocked;
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isSelected ? AppTheme.primary : AppTheme.cardBorder;
-    final backgroundColor = isSelected ? AppTheme.soft : Colors.white;
+    const activeBackground = Color(0xFFEFF4F1);
+    final statusText = isSelected
+        ? 'aktif'
+        : isCompleted
+            ? 'hazır'
+            : 'bekliyor';
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        onTap: isBlocked ? null : onTap,
+        borderRadius: BorderRadius.circular(12),
         child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: borderColor, width: isSelected ? 1.4 : 1),
+            color: isSelected ? activeBackground : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppTheme.cardBorder),
-                ),
-                child: Text(
-                  letter,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
@@ -741,18 +662,17 @@ class _StepCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isCompleted
-                      ? AppTheme.soft
+                  color: isSelected
+                      ? const Color(0xFFDDEBE3)
                       : AppTheme.surface.withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppTheme.cardBorder),
                 ),
                 child: Text(
-                  isCompleted ? 'Hazır' : 'Bekliyor',
+                  statusText,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isCompleted ? AppTheme.primary : AppTheme.textMuted,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? AppTheme.primary : AppTheme.textMuted,
                   ),
                 ),
               ),
@@ -850,14 +770,6 @@ class _ResultCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Model güveni: %${result.confidencePercent.toStringAsFixed(1)}',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: accent,
-            ),
-          ),
         ],
       ),
     );
@@ -908,6 +820,10 @@ class _VoiceAnalyzeResultScreen extends StatelessWidget {
                     const Spacer(),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop(),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.homeIconBackground,
+                        foregroundColor: AppTheme.homeAccent,
+                      ),
                       child: const Text('Kayıt Ekranına Dön'),
                     ),
                   ],

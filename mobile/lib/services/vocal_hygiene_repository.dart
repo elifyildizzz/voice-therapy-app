@@ -1,11 +1,7 @@
-import 'dart:convert';
-
-import 'package:sqflite/sqflite.dart';
-
 import '../models/vocal_hygiene_question.dart';
 import '../models/vocal_hygiene_survey_response.dart';
 import 'auth_service.dart';
-import 'local_database.dart';
+import 'backend_api_client.dart';
 
 class VocalHygieneRepository {
   VocalHygieneRepository._();
@@ -111,63 +107,34 @@ class VocalHygieneRepository {
     ),
   ];
 
-  Future<Database> get _database async => LocalDatabase.instance.database;
-
   Future<void> saveResponse(VocalHygieneSurveyResponse response) async {
-    final currentUserId = AuthService.instance.currentUser?.id;
-    if (currentUserId == null) {
+    if (AuthService.instance.currentUser == null) {
       return;
     }
 
-    final database = await _database;
-
-    await database.insert(
-      LocalDatabase.vocalHygieneSurveyTable,
+    await BackendApiClient.instance.postJson(
+      '/vocal-hygiene/responses',
       <String, Object?>{
-        'user_id': currentUserId,
-        'answers_json': jsonEncode(response.answers),
-        'created_at': response.createdAt.millisecondsSinceEpoch,
+        'answers': response.answers,
       },
     );
   }
 
   Future<VocalHygieneSurveyResponse?> fetchLatestResponse(
       {String? userId}) async {
-    final resolvedUserId = userId ?? AuthService.instance.currentUser?.id;
-    if (resolvedUserId == null) {
+    if (AuthService.instance.currentUser == null) {
       return null;
     }
 
-    final database = await _database;
-    final rows = await database.query(
-      LocalDatabase.vocalHygieneSurveyTable,
-      where: 'user_id = ?',
-      whereArgs: <Object?>[resolvedUserId],
-      orderBy: 'created_at DESC',
-      limit: 1,
-    );
-
-    if (rows.isEmpty) {
+    final body = await BackendApiClient.instance
+        .getJson('/vocal-hygiene/responses/latest');
+    final responseJson = body['response'];
+    if (responseJson == null) {
       return null;
     }
-
-    final row = rows.first;
-    final rawAnswers = jsonDecode(row['answers_json'] as String);
-    final answers = <String, List<String>>{};
-
-    if (rawAnswers is Map<String, dynamic>) {
-      for (final entry in rawAnswers.entries) {
-        final value = entry.value;
-        if (value is List) {
-          answers[entry.key] =
-              value.whereType<String>().toList(growable: false);
-        }
-      }
+    if (responseJson is! Map<String, dynamic>) {
+      throw const BackendApiException('Vokal hijyen cevabı okunamadı.');
     }
-
-    return VocalHygieneSurveyResponse(
-      answers: answers,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(row['created_at'] as int),
-    );
+    return VocalHygieneSurveyResponse.fromApi(responseJson);
   }
 }

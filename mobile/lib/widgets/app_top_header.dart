@@ -7,6 +7,8 @@ class AppTopHeader extends StatelessWidget {
   const AppTopHeader._({
     required this.title,
     required this.showBackButton,
+    required this.isHomeHeader,
+    required this.showDivider,
     this.subtitle,
     this.onBackPressed,
     this.bodyHeight,
@@ -28,6 +30,8 @@ class AppTopHeader extends StatelessWidget {
           title: title,
           subtitle: subtitle,
           showBackButton: false,
+          isHomeHeader: true,
+          showDivider: false,
           bodyHeight: bodyHeight,
           bottomPadding: bottomPadding,
           borderRadius: borderRadius,
@@ -39,12 +43,16 @@ class AppTopHeader extends StatelessWidget {
     required String title,
     String? subtitle,
     VoidCallback? onBackPressed,
+    bool showBackButton = true,
+    bool showDivider = false,
     Key? key,
   }) : this._(
           title: title,
           subtitle: subtitle,
           onBackPressed: onBackPressed,
-          showBackButton: true,
+          showBackButton: showBackButton,
+          isHomeHeader: false,
+          showDivider: showDivider,
           key: key,
         );
 
@@ -53,6 +61,8 @@ class AppTopHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
   final bool showBackButton;
+  final bool isHomeHeader;
+  final bool showDivider;
   final VoidCallback? onBackPressed;
   final double? bodyHeight;
   final double? bottomPadding;
@@ -62,16 +72,24 @@ class AppTopHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
-    if (showBackButton) {
+    if (!isHomeHeader) {
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.dark.copyWith(
           statusBarColor: Colors.transparent,
           systemNavigationBarColor: AppTheme.surface,
         ),
-        child: Padding(
+        child: Container(
           padding: EdgeInsets.fromLTRB(16, topInset + 8, 20, 6),
+          decoration: BoxDecoration(
+            border: showDivider
+                ? const Border(
+                    bottom: BorderSide(color: AppTheme.cardBorder),
+                  )
+                : null,
+          ),
           child: _BackHeaderContent(
             title: title,
+            showBackButton: showBackButton,
             onBackPressed: onBackPressed ??
                 () {
                   // Avoid popping the root route when this header is used inside
@@ -160,10 +178,12 @@ class _HomeHeaderContent extends StatelessWidget {
 class _BackHeaderContent extends StatelessWidget {
   const _BackHeaderContent({
     required this.title,
+    required this.showBackButton,
     required this.onBackPressed,
   });
 
   final String title;
+  final bool showBackButton;
   final VoidCallback onBackPressed;
 
   @override
@@ -171,19 +191,21 @@ class _BackHeaderContent extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        GestureDetector(
-          onTap: onBackPressed,
-          behavior: HitTestBehavior.opaque,
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.textPrimary,
-              size: 18,
+        if (showBackButton) ...[
+          GestureDetector(
+            onTap: onBackPressed,
+            behavior: HitTestBehavior.opaque,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: AppTheme.textPrimary,
+                size: 18,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
+          const SizedBox(width: 8),
+        ],
         Expanded(
           child: Text(
             title,

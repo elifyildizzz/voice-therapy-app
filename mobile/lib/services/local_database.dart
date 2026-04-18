@@ -12,7 +12,7 @@ class LocalDatabase {
   static const String usersTable = 'users';
   static const String authSessionTable = 'auth_session';
   static const String vocalHygieneSurveyTable = 'vocal_hygiene_survey';
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 5;
 
   Database? _database;
 
@@ -40,6 +40,9 @@ class LocalDatabase {
         }
         if (oldVersion < 4) {
           await _createVocalHygieneSurveyTable(db);
+        }
+        if (oldVersion < 5) {
+          await _addAuthSessionAccessTokenColumn(db);
         }
       },
       onOpen: (db) async {
@@ -100,6 +103,7 @@ class LocalDatabase {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS ${LocalDatabase.authSessionTable} (
         user_id TEXT NOT NULL,
+        access_token TEXT NOT NULL,
         created_at INTEGER NOT NULL
       )
     ''');
@@ -122,5 +126,16 @@ class LocalDatabase {
     await _createUsersTable(db);
     await _createAuthSessionTable(db);
     await _createVocalHygieneSurveyTable(db);
+  }
+
+  Future<void> _addAuthSessionAccessTokenColumn(Database db) async {
+    try {
+      await db.execute(
+        'ALTER TABLE ${LocalDatabase.authSessionTable} ADD COLUMN access_token TEXT',
+      );
+    } catch (_) {
+      // The column can already exist on dev builds after hot restart cycles.
+    }
+    await db.delete(LocalDatabase.authSessionTable);
   }
 }

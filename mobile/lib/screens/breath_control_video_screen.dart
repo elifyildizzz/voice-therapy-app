@@ -30,7 +30,10 @@ class BreathControlVideoScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            AppTopHeader.withBack(title: exercise.titleTr),
+            AppTopHeader.withBack(
+              title: exercise.titleTr,
+              showDivider: true,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),

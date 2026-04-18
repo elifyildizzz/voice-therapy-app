@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import 'home_screen.dart';
+import 'progress_screen.dart';
 import 'profile_screen.dart';
 import 'voice_analyze_consent_screen.dart';
 import 'auth_screen.dart';
@@ -18,20 +21,23 @@ class _AppShellScreenState extends State<AppShellScreen> {
   int _selectedIndex = 1;
   late final Future<void> _authInitFuture;
 
-  static const List<Widget> _authenticatedTabs = [
-    VoiceAnalyzeConsentScreen(),
-    HomeScreen(),
-    ProfileScreen(),
-  ];
-
-  static const List<Widget> _guestTabs = [
-    VoiceAnalyzeConsentScreen(),
-    HomeScreen(),
-  ];
-
   List<Widget> get _tabs {
     final isAuthenticated = AuthService.instance.currentUser != null;
-    return isAuthenticated ? _authenticatedTabs : _guestTabs;
+    if (!isAuthenticated) {
+      return const [
+        VoiceAnalyzeConsentScreen(),
+        HomeScreen(),
+      ];
+    }
+
+    return [
+      const VoiceAnalyzeConsentScreen(),
+      const HomeScreen(),
+      ProgressScreen(
+        onBackPressed: () => _onTabSelected(1),
+      ),
+      const ProfileScreen(),
+    ];
   }
 
   @override
@@ -135,9 +141,18 @@ class _AppShellScreenState extends State<AppShellScreen> {
                 : _selectedIndex;
 
             return Scaffold(
-              body: IndexedStack(
-                index: safeIndex,
-                children: currentTabs,
+              body: AnnotatedRegion<SystemUiOverlayStyle>(
+                value: const SystemUiOverlayStyle(
+                  statusBarColor: Color(0xFFDCE7D4),
+                  statusBarIconBrightness: Brightness.dark,
+                  statusBarBrightness: Brightness.light,
+                  systemNavigationBarColor: AppTheme.card,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                ),
+                child: IndexedStack(
+                  index: safeIndex,
+                  children: currentTabs,
+                ),
               ),
               bottomNavigationBar: AppBottomNavigationBar(
                 currentIndex: safeIndex,

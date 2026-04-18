@@ -11,6 +11,7 @@ class SzTestRecordCard extends StatelessWidget {
     required this.record,
     this.showNote = false,
     this.showTime = false,
+    this.embedded = false,
     super.key,
   });
 
@@ -18,9 +19,67 @@ class SzTestRecordCard extends StatelessWidget {
   final SzTestRecord record;
   final bool showNote;
   final bool showTime;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.darkBlue,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _RecordMetricRow(
+          label: 'Tarih',
+          value: formatAppDate(record.createdAt, withTime: showTime),
+        ),
+        const SizedBox(height: 8),
+        _RecordMetricRow(
+          label: 'S en uzun',
+          value: formatSzSeconds(record.sBest),
+        ),
+        const SizedBox(height: 8),
+        _RecordMetricRow(
+          label: 'Z en uzun',
+          value: formatSzSeconds(record.zBest),
+        ),
+        const SizedBox(height: 8),
+        _RecordMetricRow(
+          label: 'S/Z oranı',
+          value: record.ratio.toStringAsFixed(2),
+        ),
+        if (showNote) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7FAFC),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              buildSzRatioNote(record.ratio),
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: Color(0xFF536274),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+
+    if (embedded) {
+      return content;
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -29,58 +88,7 @@ class SzTestRecordCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppTheme.cardBorder),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.darkBlue,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _RecordMetricRow(
-            label: 'Tarih',
-            value: formatAppDate(record.createdAt, withTime: showTime),
-          ),
-          const SizedBox(height: 8),
-          _RecordMetricRow(
-            label: 'S en uzun',
-            value: formatSzSeconds(record.sBest),
-          ),
-          const SizedBox(height: 8),
-          _RecordMetricRow(
-            label: 'Z en uzun',
-            value: formatSzSeconds(record.zBest),
-          ),
-          const SizedBox(height: 8),
-          _RecordMetricRow(
-            label: 'S/Z oranı',
-            value: record.ratio.toStringAsFixed(2),
-          ),
-          if (showNote) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7FAFC),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Text(
-                buildSzRatioNote(record.ratio),
-                style: const TextStyle(
-                  fontSize: 13,
-                  height: 1.4,
-                  color: Color(0xFF536274),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
+      child: content,
     );
   }
 }

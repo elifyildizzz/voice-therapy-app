@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
+  static const Color brandGreen = Color(0xFF4C766A);
   static const Color primary = Color(0xFF2F5D50);
   static const Color pressed = Color(0xFF254A40);
   static const Color light = Color(0xFF5E867B);
+  static const Color buttonPrimary = brandGreen;
+  static const Color buttonPressed = Color(0xFF3F6258);
   static const Color soft = Color(0xFFE8F2EC);
   static const Color primarySoft = soft;
   static const Color surface = Color(0xFFF7F5F2);
   static const Color card = Color(0xFFFFFFFF);
   static const Color headerStart = Color(0xFF8EA684);
   static const Color headerEnd = Color(0xFF6F8F69);
-  static const Color homeAccent = Color(0xFF4D6B57);
+  static const Color homeAccent = brandGreen;
   static const Color homeCard = Color(0xFFDCE7D4);
+  static const Color homeIconBackground = Color(0xFFE6F0E6);
   static const Color terracotta = Color(0xFFD98371);
   static const Color sand = Color(0xFFE5DCCA);
   static const Color textPrimary = Color(0xFF1F2937);
-  static const Color textMuted = Color(0xFF6B7280);
+  static const Color textMuted = Color(0xFF374151);
   static const Color cardBorder = Color(0xFFE5E7EB);
   static const Color iconBg = soft;
-  static const Color darkBlue = primary;
+  static const Color darkBlue = brandGreen;
   static const Color lightBlue = light;
 
   static List<BoxShadow> get softShadow => const [
@@ -85,12 +89,12 @@ class AppTheme {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return light.withValues(alpha: 0.35);
+              return buttonPrimary.withValues(alpha: 0.35);
             }
             if (states.contains(WidgetState.pressed)) {
-              return pressed;
+              return buttonPressed;
             }
-            return primary;
+            return buttonPrimary;
           }),
           foregroundColor: WidgetStateProperty.all(Colors.white),
           overlayColor: WidgetStateProperty.resolveWith((states) {

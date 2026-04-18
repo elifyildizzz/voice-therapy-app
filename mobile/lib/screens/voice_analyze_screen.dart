@@ -770,14 +770,6 @@ class _ResultCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Model güveni: %${result.confidencePercent.toStringAsFixed(1)}',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: accent,
-            ),
-          ),
         ],
       ),
     );

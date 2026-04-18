@@ -45,6 +45,16 @@ class AudioQualityError(ValueError):
     pass
 
 
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
 def label_to_api_value(label: str) -> str:
     if label == "healthy":
         return "healthy"
@@ -281,9 +291,14 @@ def analyze_voice_pair(a_path: Path, i_path: Path) -> dict[str, object]:
     predicted_index = int(model.predict(feature_vector)[0])
 
     confidence = 0.5
+    class_probabilities: dict[int, float] = {}
     if hasattr(model, "predict_proba"):
         probabilities = model.predict_proba(feature_vector)[0]
         confidence = float(np.max(probabilities))
+        model_classes = getattr(model, "classes_", None)
+        if model_classes is not None:
+            for class_idx, prob in zip(model_classes, probabilities):
+                class_probabilities[int(class_idx)] = float(prob)
 
     label_map = {int(key): value for key, value in meta["classes"].items()}
     label = label_map.get(predicted_index, "pathologic")
@@ -294,6 +309,9 @@ def analyze_voice_pair(a_path: Path, i_path: Path) -> dict[str, object]:
     min_confidence_pathologic = float(
         decision_policy.get("min_confidence_pathologic", 0.75)
     )
+    min_pathologic_margin = float(
+        decision_policy.get("min_pathologic_margin", 0.15)
+    )
     max_abs_z_limit = float(decision_policy.get("max_abs_zscore_threshold", 6.0))
     mean_abs_z_limit = float(decision_policy.get("mean_abs_zscore_threshold", 1.5))
 
@@ -301,20 +319,54 @@ def analyze_voice_pair(a_path: Path, i_path: Path) -> dict[str, object]:
     # In relaxed mode, clamp policy thresholds to practical minima/maxima
     # so we do not over-trigger "inconclusive" for otherwise usable samples.
     if RELAXED_POLICY_ENABLED:
-        min_confidence_healthy = min(min_confidence_healthy, 0.55)
-        min_confidence_pathologic = min(min_confidence_pathologic, 0.65)
-        max_abs_z_limit = max(max_abs_z_limit, 7.5)
-        mean_abs_z_limit = max(mean_abs_z_limit, 1.9)
+        min_confidence_healthy = min(min_confidence_healthy, 0.52)
+        min_confidence_pathologic = min(min_confidence_pathologic, 0.68)
+        min_pathologic_margin = max(min_pathologic_margin, 0.18)
+        max_abs_z_limit = max(max_abs_z_limit, 8.5)
+        mean_abs_z_limit = max(mean_abs_z_limit, 2.2)
+
+    # Allow runtime tuning without rebuilding artifacts.
+    min_confidence_healthy = _env_float(
+        "VOICE_SCREENING_MIN_CONF_HEALTHY",
+        min_confidence_healthy,
+    )
+    min_confidence_pathologic = _env_float(
+        "VOICE_SCREENING_MIN_CONF_PATHOLOGIC",
+        min_confidence_pathologic,
+    )
+    min_pathologic_margin = _env_float(
+        "VOICE_SCREENING_MIN_PATHOLOGIC_MARGIN",
+        min_pathologic_margin,
+    )
+    max_abs_z_limit = _env_float(
+        "VOICE_SCREENING_MAX_ABS_Z",
+        max_abs_z_limit,
+    )
+    mean_abs_z_limit = _env_float(
+        "VOICE_SCREENING_MEAN_ABS_Z",
+        mean_abs_z_limit,
+    )
 
     min_confidence = (
         min_confidence_healthy if label == "healthy" else min_confidence_pathologic
     )
 
-    if (
-        confidence < min_confidence
-        or diagnostics["max_abs_zscore"] > max_abs_z_limit
-        or diagnostics["mean_abs_zscore"] > mean_abs_z_limit
-    ):
+    inconclusive_reasons: list[str] = []
+    if confidence < min_confidence:
+        inconclusive_reasons.append("low_confidence")
+    if diagnostics["max_abs_zscore"] > max_abs_z_limit:
+        inconclusive_reasons.append("max_abs_zscore_out_of_distribution")
+    if diagnostics["mean_abs_zscore"] > mean_abs_z_limit:
+        inconclusive_reasons.append("mean_abs_zscore_out_of_distribution")
+
+    healthy_proba = class_probabilities.get(0, 1.0 - confidence)
+    pathologic_proba = class_probabilities.get(1, confidence)
+    if label == "pathologic":
+        pathologic_margin = pathologic_proba - healthy_proba
+        if pathologic_margin < min_pathologic_margin:
+            inconclusive_reasons.append("pathologic_margin_too_low")
+
+    if inconclusive_reasons:
         label = "inconclusive"
 
     result = _build_result(label, confidence)
@@ -328,4 +380,22 @@ def analyze_voice_pair(a_path: Path, i_path: Path) -> dict[str, object]:
             "tokens": meta.get("tokens", ["a_n", "i_n"]),
         },
         "quality": diagnostics,
+        "decision": {
+            "raw_prediction_label": label_map.get(predicted_index, "pathologic"),
+            "final_label": label,
+            "confidence": round(confidence, 6),
+            "thresholds": {
+                "min_confidence_healthy": round(min_confidence_healthy, 6),
+                "min_confidence_pathologic": round(min_confidence_pathologic, 6),
+                "min_pathologic_margin": round(min_pathologic_margin, 6),
+                "max_abs_zscore": round(max_abs_z_limit, 6),
+                "mean_abs_zscore": round(mean_abs_z_limit, 6),
+            },
+            "probabilities": {
+                "healthy": round(healthy_proba, 6),
+                "pathologic": round(pathologic_proba, 6),
+            },
+            "inconclusive_reasons": inconclusive_reasons,
+            "relaxed_policy_enabled": RELAXED_POLICY_ENABLED,
+        },
     }

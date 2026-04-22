@@ -25,6 +25,8 @@ class BreathControlScreen extends StatefulWidget {
 }
 
 class _BreathControlScreenState extends State<BreathControlScreen> {
+  static const String _exerciseKey = 'maximum_a_phonation';
+
   final AudioRecorder _audioRecorder = AudioRecorder();
   final MeasurementRepository _repository = MeasurementRepository.instance;
   final Stopwatch _stopwatch = Stopwatch();
@@ -46,12 +48,10 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
   @override
   void initState() {
     super.initState();
-    final cachedRecords = _repository.peekRecordsForToday(
-      module: MeasurementRepository.breathControlModule,
-      exerciseKey: 'maximum_a_phonation',
-    );
+    final cachedRecords = _repository.peekRecords();
     if (_repository.hasLoadedCache) {
-      _savedRecords = cachedRecords;
+      _savedRecords = _todayBreathRecords(cachedRecords);
+      _bestSeconds = _bestBreathSeconds(cachedRecords);
       _isLoadingSavedRecords = false;
     } else {
       unawaited(_loadSavedRecords());
@@ -60,15 +60,13 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
 
   Future<void> _loadSavedRecords() async {
     try {
-      final records = await _repository.fetchRecordsForToday(
-        module: MeasurementRepository.breathControlModule,
-        exerciseKey: 'maximum_a_phonation',
-      );
+      final records = await _repository.fetchRecords();
       if (!mounted) {
         return;
       }
       setState(() {
-        _savedRecords = records;
+        _savedRecords = _todayBreathRecords(records);
+        _bestSeconds = _bestBreathSeconds(records);
         _isLoadingSavedRecords = false;
       });
     } catch (_) {
@@ -80,6 +78,41 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
       });
       _showMessage('Ölçüm kayıtları yüklenemedi.');
     }
+  }
+
+  List<MeasurementRecord> _todayBreathRecords(List<MeasurementRecord> records) {
+    final today = _formatClientDate(DateTime.now());
+    final filtered = records
+        .where(
+          (record) =>
+              record.clientDate == today &&
+              record.module == MeasurementRepository.breathControlModule &&
+              record.exerciseKey == _exerciseKey,
+        )
+        .toList(growable: true)
+      ..sort((left, right) => left.performedAt.compareTo(right.performedAt));
+    return List<MeasurementRecord>.unmodifiable(filtered);
+  }
+
+  double _bestBreathSeconds(List<MeasurementRecord> records) {
+    var bestMilliseconds = 0;
+    for (final record in records) {
+      if (record.module != MeasurementRepository.breathControlModule ||
+          record.exerciseKey != _exerciseKey) {
+        continue;
+      }
+      if (record.duration.inMilliseconds > bestMilliseconds) {
+        bestMilliseconds = record.duration.inMilliseconds;
+      }
+    }
+    return bestMilliseconds / 1000;
+  }
+
+  String _formatClientDate(DateTime value) {
+    final local = value.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    return '${local.year}-$month-$day';
   }
 
   Future<void> _startRecording() async {
@@ -255,7 +288,7 @@ class _BreathControlScreenState extends State<BreathControlScreen> {
     try {
       final slot = await _repository.saveRecord(
         module: MeasurementRepository.breathControlModule,
-        exerciseKey: 'maximum_a_phonation',
+        exerciseKey: _exerciseKey,
         exerciseTitle: 'Maximum /a/ Fonasyonu',
         duration: duration,
       );

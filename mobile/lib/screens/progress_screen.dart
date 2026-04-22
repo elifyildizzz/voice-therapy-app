@@ -197,7 +197,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final firstDayOfMonth = DateTime(month.year, month.month, 1);
     final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
     final leadingEmptySlots = firstDayOfMonth.weekday % 7;
-    final cells = List<DateTime?>.filled(42, null);
+    final visibleSlots = leadingEmptySlots + daysInMonth;
+    final rowCount = (visibleSlots / 7).ceil();
+    final cells = List<DateTime?>.filled(rowCount * 7, null);
 
     for (var day = 1; day <= daysInMonth; day++) {
       cells[leadingEmptySlots + day - 1] =
@@ -437,11 +439,14 @@ class _CalendarCard extends StatelessWidget {
                 )
                 .toList(),
           ),
-          Transform.translate(
-            offset: const Offset(0, -10),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: true,
+              removeBottom: true,
               child: GridView.builder(
+                padding: EdgeInsets.zero,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
